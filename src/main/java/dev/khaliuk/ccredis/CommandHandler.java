@@ -1,8 +1,8 @@
 package dev.khaliuk.ccredis;
 
-public class CommandHandler {
-    private static final String CRLF_TERMINATOR = "\r\n";
+import dev.khaliuk.ccredis.protocol.ProtocolSerializer;
 
+public class CommandHandler {
     private CommandHandler() {
     }
 
@@ -10,10 +10,11 @@ public class CommandHandler {
         String[] arguments = parsedCommand.split(" ");
         String command = arguments[0].toLowerCase();
         return switch (command) {
-            case "ping" -> "+PONG" + CRLF_TERMINATOR;
-            case "echo" -> "$" + arguments[1].length() + CRLF_TERMINATOR + arguments[1] + CRLF_TERMINATOR;
+            case "ping" -> ProtocolSerializer.simpleString("PONG");
+            case "echo" -> ProtocolSerializer.bulkString(arguments[1]);
             case "set" -> handleSet(arguments);
             case "get" -> handleGet(arguments);
+            case "info" -> handleInfo(arguments);
             default -> throw new RuntimeException("Unknown command: " + command);
         };
     }
@@ -32,14 +33,20 @@ public class CommandHandler {
         } else {
             Storage.put(arguments[1], arguments[2]);
         }
-        return "+OK" + CRLF_TERMINATOR;
+        return ProtocolSerializer.simpleString("OK");
     }
 
     private static String handleGet(String[] arguments) {
         String value = Storage.get(arguments[1]);
-        if (value == null) {
-            return "$-1" + CRLF_TERMINATOR;
-        }
-        return "$" + value.length() + CRLF_TERMINATOR + value + CRLF_TERMINATOR;
+        return ProtocolSerializer.bulkString(value);
+    }
+
+    private static String handleInfo(String[] arguments) {
+        String parameter = arguments[1].toLowerCase();
+        String role = "role:master";
+        return switch (parameter) {
+            case "replication" -> ProtocolSerializer.bulkString(role);
+            default -> throw new RuntimeException("Unknown parameter: " + parameter);
+        };
     }
 }

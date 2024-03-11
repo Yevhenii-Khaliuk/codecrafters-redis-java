@@ -1,6 +1,7 @@
 package dev.khaliuk.ccredis;
 
 import dev.khaliuk.ccredis.exception.EndOfStreamException;
+import dev.khaliuk.ccredis.protocol.ProtocolDeserializer;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -22,7 +23,7 @@ public class ConnectionHandler extends Thread {
              OutputStream outputStream = socket.getOutputStream()) {
 
             while (true) {
-                String parsedCommand = ProtocolParser.parseInput(inputStream);
+                String parsedCommand = ProtocolDeserializer.parseInput(inputStream);
                 String response = CommandHandler.handle(parsedCommand);
                 outputStream.write(response.getBytes(StandardCharsets.UTF_8));
                 // TODO: handle end of input
