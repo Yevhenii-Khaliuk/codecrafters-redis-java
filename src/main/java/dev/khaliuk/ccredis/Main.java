@@ -1,8 +1,13 @@
 package dev.khaliuk.ccredis;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 public class Main {
     public static void main(String[] args) {
@@ -18,6 +23,13 @@ public class Main {
             serverSocket.setReuseAddress(true);
             // Wait for connection from client.
             clientSocket = serverSocket.accept();
+
+            DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
+            System.out.println("received byte: " + inputStream.readByte());
+
+            OutputStream outputStream = clientSocket.getOutputStream();
+            outputStream.write("+PONG\r\n".getBytes(StandardCharsets.UTF_8));
+
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         } finally {
