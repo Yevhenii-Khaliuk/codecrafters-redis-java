@@ -20,17 +20,12 @@ public class ConnectionHandler extends Thread {
              OutputStream outputStream = socket.getOutputStream()) {
 
             while (true) {
-                byte[] bytes = new byte[256];
-                int n = inputStream.read(bytes);
-
-                if (n == -1) {
-                    break;
-                }
-
-                System.out.printf("%s received %s bytes: %s%n", getName(), n, new String(bytes));
-
-                outputStream.write("+PONG\r\n".getBytes(StandardCharsets.UTF_8));
+                String parsedCommand = ProtocolParser.parseInput(inputStream);
+                String response = CommandHandler.handle(parsedCommand);
+                outputStream.write(response.getBytes(StandardCharsets.UTF_8));
+                // TODO: handle end of input
             }
+
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         } finally {
