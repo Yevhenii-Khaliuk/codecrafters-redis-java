@@ -1,9 +1,7 @@
 package dev.khaliuk.ccredis;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -23,13 +21,21 @@ public class Main {
             serverSocket.setReuseAddress(true);
             // Wait for connection from client.
             clientSocket = serverSocket.accept();
-
             DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
-            System.out.println("received byte: " + inputStream.readByte());
-
             OutputStream outputStream = clientSocket.getOutputStream();
-            outputStream.write("+PONG\r\n".getBytes(StandardCharsets.UTF_8));
 
+            while (true) {
+                byte[] bytes = new byte[256];
+                int n = inputStream.read(bytes);
+
+                if (n == -1) {
+                    break;
+                }
+
+                System.out.printf("received %s bytes: %s%n", n, new String(bytes));
+
+                outputStream.write("+PONG\r\n".getBytes(StandardCharsets.UTF_8));
+            }
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         } finally {
