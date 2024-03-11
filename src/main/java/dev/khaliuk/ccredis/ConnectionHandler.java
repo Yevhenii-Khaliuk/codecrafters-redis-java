@@ -1,5 +1,7 @@
 package dev.khaliuk.ccredis;
 
+import dev.khaliuk.ccredis.exception.EndOfStreamException;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -26,6 +28,8 @@ public class ConnectionHandler extends Thread {
                 // TODO: handle end of input
             }
 
+        } catch (EndOfStreamException e) {
+            System.out.println("End of input stream reached");
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         } finally {

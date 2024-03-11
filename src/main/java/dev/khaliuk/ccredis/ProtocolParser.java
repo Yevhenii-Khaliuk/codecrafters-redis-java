@@ -1,6 +1,9 @@
 package dev.khaliuk.ccredis;
 
+import dev.khaliuk.ccredis.exception.EndOfStreamException;
+
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +11,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ProtocolParser {
-    private ProtocolParser() {}
+    private ProtocolParser() {
+    }
 
     public static String parseInput(DataInputStream inputStream) {
         try {
@@ -19,6 +23,8 @@ public class ProtocolParser {
                 case '$' -> parseString(inputStream);
                 default -> throw new RuntimeException("Unknown character: " + c);
             };
+        } catch (EOFException e) {
+            throw new EndOfStreamException();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
