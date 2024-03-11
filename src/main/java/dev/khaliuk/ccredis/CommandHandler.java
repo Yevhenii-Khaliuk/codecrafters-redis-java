@@ -12,15 +12,34 @@ public class CommandHandler {
         return switch (command) {
             case "ping" -> "+PONG" + CRLF_TERMINATOR;
             case "echo" -> "$" + arguments[1].length() + CRLF_TERMINATOR + arguments[1] + CRLF_TERMINATOR;
-            case "set" -> {
-                Storage.put(arguments[1], arguments[2]);
-                yield "+OK" + CRLF_TERMINATOR;
-            }
-            case "get" -> {
-                String value = Storage.get(arguments[1]);
-                yield "$" + value.length() + CRLF_TERMINATOR + value + CRLF_TERMINATOR;
-            }
+            case "set" -> handleSet(arguments);
+            case "get" -> handleGet(arguments);
             default -> throw new RuntimeException("Unknown command: " + command);
         };
+    }
+
+    private static String handleSet(String[] arguments) {
+        if (arguments.length > 3) {
+            String parameter = arguments[3].toLowerCase();
+            switch (parameter) {
+                case "px":
+                    Long expiration = Long.parseLong(arguments[4]);
+                    Storage.put(arguments[1], arguments[2], expiration);
+                    break;
+                default:
+                    throw new RuntimeException("Unknown parameter: " + parameter);
+            }
+        } else {
+            Storage.put(arguments[1], arguments[2]);
+        }
+        return "+OK" + CRLF_TERMINATOR;
+    }
+
+    private static String handleGet(String[] arguments) {
+        String value = Storage.get(arguments[1]);
+        if (value == null) {
+            return "$-1" + CRLF_TERMINATOR;
+        }
+        return "$" + value.length() + CRLF_TERMINATOR + value + CRLF_TERMINATOR;
     }
 }
