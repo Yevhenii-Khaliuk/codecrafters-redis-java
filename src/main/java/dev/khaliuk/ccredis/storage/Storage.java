@@ -1,6 +1,4 @@
-package dev.khaliuk.ccredis;
-
-import dev.khaliuk.ccredis.storage.StorageRecord;
+package dev.khaliuk.ccredis.storage;
 
 import java.time.Instant;
 import java.util.HashMap;

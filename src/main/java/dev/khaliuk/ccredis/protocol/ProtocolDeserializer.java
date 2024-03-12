@@ -11,10 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ProtocolDeserializer {
-    private ProtocolDeserializer() {
-    }
-
-    public static String parseInput(DataInputStream inputStream) {
+    public String parseInput(DataInputStream inputStream) {
         try {
             char c = (char) inputStream.readByte();
             return switch (c) {
@@ -30,14 +27,14 @@ public class ProtocolDeserializer {
         }
     }
 
-    private static String parseArray(DataInputStream inputStream) throws IOException {
+    private String parseArray(DataInputStream inputStream) throws IOException {
         int arraySize = parseDigits(inputStream);
         return IntStream.range(0, arraySize)
                 .mapToObj(i -> parseInput(inputStream))
                 .collect(Collectors.joining(" "));
     }
 
-    private static String parseString(DataInputStream inputStream) throws IOException {
+    private String parseString(DataInputStream inputStream) throws IOException {
         int stringLength = parseDigits(inputStream);
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < stringLength; i++) {
@@ -49,7 +46,7 @@ public class ProtocolDeserializer {
         return stringBuilder.toString();
     }
 
-    private static int parseDigits(DataInputStream inputStream) throws IOException {
+    private int parseDigits(DataInputStream inputStream) throws IOException {
         char c = (char) inputStream.readByte();
         List<Character> characters = new ArrayList<>();
         while (c != '\r') {

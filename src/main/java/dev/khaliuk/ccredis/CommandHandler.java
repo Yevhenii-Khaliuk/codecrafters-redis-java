@@ -1,17 +1,24 @@
 package dev.khaliuk.ccredis;
 
+import dev.khaliuk.ccredis.config.ApplicationProperties;
 import dev.khaliuk.ccredis.protocol.ProtocolSerializer;
+import dev.khaliuk.ccredis.storage.Storage;
 
 public class CommandHandler {
-    private CommandHandler() {
+    private final ProtocolSerializer protocolSerializer;
+    private final ApplicationProperties applicationProperties;
+
+    public CommandHandler(ProtocolSerializer protocolSerializer, ApplicationProperties applicationProperties) {
+        this.protocolSerializer = protocolSerializer;
+        this.applicationProperties = applicationProperties;
     }
 
-    public static String handle(String parsedCommand) {
+    public String handle(String parsedCommand) {
         String[] arguments = parsedCommand.split(" ");
         String command = arguments[0].toLowerCase();
         return switch (command) {
-            case "ping" -> ProtocolSerializer.simpleString("PONG");
-            case "echo" -> ProtocolSerializer.bulkString(arguments[1]);
+            case "ping" -> protocolSerializer.simpleString("PONG");
+            case "echo" -> protocolSerializer.bulkString(arguments[1]);
             case "set" -> handleSet(arguments);
             case "get" -> handleGet(arguments);
             case "info" -> handleInfo(arguments);
@@ -19,7 +26,7 @@ public class CommandHandler {
         };
     }
 
-    private static String handleSet(String[] arguments) {
+    private String handleSet(String[] arguments) {
         if (arguments.length > 3) {
             String parameter = arguments[3].toLowerCase();
             switch (parameter) {
@@ -33,19 +40,19 @@ public class CommandHandler {
         } else {
             Storage.put(arguments[1], arguments[2]);
         }
-        return ProtocolSerializer.simpleString("OK");
+        return protocolSerializer.simpleString("OK");
     }
 
-    private static String handleGet(String[] arguments) {
+    private String handleGet(String[] arguments) {
         String value = Storage.get(arguments[1]);
-        return ProtocolSerializer.bulkString(value);
+        return protocolSerializer.bulkString(value);
     }
 
-    private static String handleInfo(String[] arguments) {
+    private String handleInfo(String[] arguments) {
         String parameter = arguments[1].toLowerCase();
-        String role = "role:master";
+        String role = "role:" + (applicationProperties.isReplica() ? "slave" : "master");
         return switch (parameter) {
-            case "replication" -> ProtocolSerializer.bulkString(role);
+            case "replication" -> protocolSerializer.bulkString(role);
             default -> throw new RuntimeException("Unknown parameter: " + parameter);
         };
     }
