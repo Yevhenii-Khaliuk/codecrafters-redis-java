@@ -76,12 +76,19 @@ public class Main {
             }
             // Step 3: REPLCONF capa psync2
             System.out.println("Sending REPLCONF capa request");
-            request = protocolSerializer.array(
-                    List.of("REPLCONF", "capa", "psync2"));
+            request = protocolSerializer.array(List.of("REPLCONF", "capa", "psync2"));
             outputStream.write(request.getBytes(StandardCharsets.UTF_8));
             response = protocolDeserializer.parseInput(inputStream);
             if (!response.equalsIgnoreCase("OK")) {
-                throw new RuntimeException("Unexpected response for REPLCONF port: " + response);
+                throw new RuntimeException("Unexpected response for REPLCONF capa: " + response);
+            }
+            // Step 4: PSYNC ? -1
+            System.out.println("Sending PSYNC request");
+            request = protocolSerializer.array(List.of("PSYNC", "?", "-1"));
+            outputStream.write(request.getBytes(StandardCharsets.UTF_8));
+            response = protocolDeserializer.parseInput(inputStream);
+            if (!response.startsWith("FULLRESYNC")) {
+                throw new RuntimeException("Unexpected response for PSYNC: " + response);
             }
         }
     }

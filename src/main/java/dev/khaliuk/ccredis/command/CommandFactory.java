@@ -37,6 +37,7 @@ public class CommandFactory {
         GET(Get.class),
         INFO(Info.class),
         PING(Ping.class),
+        PSYNC(Psync.class),
         REPLCONF(ReplConf.class),
         SET(Set.class);
 
