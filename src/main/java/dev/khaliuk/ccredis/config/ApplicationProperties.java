@@ -1,8 +1,23 @@
 package dev.khaliuk.ccredis.config;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
+import java.util.UUID;
+
 public class ApplicationProperties {
     private int port = 6379;
     private Replica replica;
+
+    // Master properties
+    private String replicationId;
+    private Long replicationOffset;
+
+    public ApplicationProperties(String[] args) {
+        parseArgs(args);
+        if (isMaster()) {
+            setMasterProperties();
+        }
+    }
 
     public int getPort() {
         return port;
@@ -12,11 +27,23 @@ public class ApplicationProperties {
         return replica != null;
     }
 
+    public boolean isMaster() {
+        return replica == null;
+    }
+
     public Replica getReplica() {
         return replica;
     }
 
-    public ApplicationProperties(String[] args) {
+    public String getReplicationId() {
+        return replicationId;
+    }
+
+    public Long getReplicationOffset() {
+        return replicationOffset;
+    }
+
+    private void parseArgs(String[] args) {
         for (int i = 0; i < args.length; i++) {
             String parameter = args[i].toLowerCase().substring(2);
             switch (parameter) {
@@ -32,6 +59,11 @@ public class ApplicationProperties {
                     throw new RuntimeException("Unknown parameter: " + parameter);
             }
         }
+    }
+
+    private void setMasterProperties() {
+        replicationId = DigestUtils.sha1Hex(UUID.randomUUID().toString());
+        replicationOffset = 0L;
     }
 
     public record Replica(String host, int port) {

@@ -49,4 +49,12 @@
         </plugins>
     </build>
 
+    <dependencies>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.16.1</version>
+        </dependency>
+    </dependencies>
+
 </project>

@@ -4,10 +4,12 @@ import dev.khaliuk.ccredis.config.ApplicationProperties;
 import dev.khaliuk.ccredis.config.ObjectFactory;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 
 public class Main {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InvocationTargetException, NoSuchMethodException,
+            InstantiationException, IllegalAccessException {
         ApplicationProperties properties = new ApplicationProperties(args);
         ObjectFactory objectFactory = new ObjectFactory(properties);
 
