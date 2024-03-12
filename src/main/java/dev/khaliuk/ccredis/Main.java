@@ -27,6 +27,8 @@ public class Main {
                 System.out.println("Start replica init");
                 new ReplicaInitializer(objectFactory).init();
                 System.out.println("Replica is initialized");
+            } else {
+                System.out.println("Master has started");
             }
 
             while (true) {
