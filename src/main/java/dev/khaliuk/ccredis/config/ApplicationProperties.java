@@ -66,6 +66,6 @@ public class ApplicationProperties {
         replicationOffset = 0L;
     }
 
-    public record Replica(String host, int port) {
+    public record Replica(String masterHost, int masterPort) {
     }
 }
