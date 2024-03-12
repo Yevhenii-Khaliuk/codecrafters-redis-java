@@ -15,12 +15,12 @@ public class Info extends AbstractHandler {
     public String handle(String[] arguments) {
         String parameter = arguments[1].toLowerCase();
         return switch (parameter) {
-            case "replication" -> objectFactory.getProtocolSerializer().array(getReplicationInfo());
+            case "replication" -> objectFactory.getProtocolSerializer().bulkString(getReplicationInfo());
             default -> throw new RuntimeException("Unknown parameter: " + parameter);
         };
     }
 
-    private List<String> getReplicationInfo() {
+    private String getReplicationInfo() {
         List<String> values = new ArrayList<>();
         ApplicationProperties applicationProperties = objectFactory.getApplicationProperties();
         boolean isMaster = applicationProperties.isMaster();
@@ -30,6 +30,6 @@ public class Info extends AbstractHandler {
             values.add("master_replid:" + applicationProperties.getReplicationId());
             values.add("master_repl_offset:" + applicationProperties.getReplicationOffset());
         }
-        return values;
+        return String.join("\n", values);
     }
 }
