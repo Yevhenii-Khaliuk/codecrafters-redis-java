@@ -17,7 +17,8 @@ public class ProtocolDeserializer {
             return switch (c) {
                 // TODO: extract character literals into constants
                 case '*' -> parseArray(inputStream);
-                case '$' -> parseString(inputStream);
+                case '$' -> parseBulkString(inputStream);
+                case '+' -> parseSimpleString(inputStream);
                 default -> throw new RuntimeException("Unknown character: " + c);
             };
         } catch (EOFException e) {
@@ -34,7 +35,7 @@ public class ProtocolDeserializer {
                 .collect(Collectors.joining(" "));
     }
 
-    private String parseString(DataInputStream inputStream) throws IOException {
+    private String parseBulkString(DataInputStream inputStream) throws IOException {
         int stringLength = parseDigits(inputStream);
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < stringLength; i++) {
@@ -46,7 +47,7 @@ public class ProtocolDeserializer {
         return stringBuilder.toString();
     }
 
-    private int parseDigits(DataInputStream inputStream) throws IOException {
+    private String parseSimpleString(DataInputStream inputStream) throws IOException {
         char c = (char) inputStream.readByte();
         List<Character> characters = new ArrayList<>();
         while (c != '\r') {
@@ -58,6 +59,10 @@ public class ProtocolDeserializer {
 
         StringBuilder stringBuilder = new StringBuilder();
         characters.forEach(stringBuilder::append);
-        return Integer.parseInt(stringBuilder.toString());
+        return stringBuilder.toString();
+    }
+
+    private int parseDigits(DataInputStream inputStream) throws IOException {
+        return Integer.parseInt(parseSimpleString(inputStream));
     }
 }

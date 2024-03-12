@@ -2,15 +2,21 @@ package dev.khaliuk.ccredis.config;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class ApplicationProperties {
+    private static final Object LOCK = new Object();
+
+    private String host;
     private int port = 6379;
-    private Replica replica;
+    private ReplicaProperties replicaProperties;
 
     // Master properties
     private String replicationId;
     private Long replicationOffset;
+    private List<ReplicaProperties> replicas;
 
     public ApplicationProperties(String[] args) {
         parseArgs(args);
@@ -19,20 +25,28 @@ public class ApplicationProperties {
         }
     }
 
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
     public int getPort() {
         return port;
     }
 
     public boolean isReplica() {
-        return replica != null;
+        return replicaProperties != null;
     }
 
     public boolean isMaster() {
-        return replica == null;
+        return replicaProperties == null;
     }
 
-    public Replica getReplica() {
-        return replica;
+    public ReplicaProperties getReplica() {
+        return replicaProperties;
     }
 
     public String getReplicationId() {
@@ -41,6 +55,19 @@ public class ApplicationProperties {
 
     public Long getReplicationOffset() {
         return replicationOffset;
+    }
+
+    public List<ReplicaProperties> getReplicas() {
+        return replicas;
+    }
+
+    public synchronized void addReplica(int port) {
+        if (replicas == null) {
+            replicas = new ArrayList<>();
+        }
+        ReplicaProperties newReplica = new ReplicaProperties(host, port);
+        System.out.println("Replica added: " + newReplica);
+        replicas.add(newReplica);
     }
 
     private void parseArgs(String[] args) {
@@ -52,7 +79,7 @@ public class ApplicationProperties {
                     i++;
                     break;
                 case "replicaof":
-                    replica = new Replica(args[i + 1], Integer.parseInt(args[i + 2]));
+                    replicaProperties = new ReplicaProperties(args[i + 1], Integer.parseInt(args[i + 2]));
                     i += 2;
                     break;
                 default:
@@ -64,8 +91,5 @@ public class ApplicationProperties {
     private void setMasterProperties() {
         replicationId = DigestUtils.sha1Hex(UUID.randomUUID().toString());
         replicationOffset = 0L;
-    }
-
-    public record Replica(String masterHost, int masterPort) {
     }
 }
