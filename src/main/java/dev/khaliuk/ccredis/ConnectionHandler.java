@@ -1,5 +1,6 @@
 package dev.khaliuk.ccredis;
 
+import dev.khaliuk.ccredis.config.ObjectFactory;
 import dev.khaliuk.ccredis.exception.EndOfStreamException;
 import dev.khaliuk.ccredis.protocol.ProtocolDeserializer;
 
@@ -15,10 +16,10 @@ public class ConnectionHandler extends Thread {
     private final ProtocolDeserializer protocolDeserializer;
     private final CommandHandler commandHandler;
 
-    public ConnectionHandler(Socket socket, ProtocolDeserializer protocolDeserializer, CommandHandler commandHandler) {
+    public ConnectionHandler(Socket socket, ObjectFactory objectFactory) {
         this.socket = socket;
-        this.protocolDeserializer = protocolDeserializer;
-        this.commandHandler = commandHandler;
+        this.protocolDeserializer = objectFactory.getProtocolDeserializer();
+        this.commandHandler = objectFactory.getCommandHandler();
     }
 
     @Override
