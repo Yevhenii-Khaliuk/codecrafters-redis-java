@@ -16,6 +16,13 @@ public class ProtocolSerializer {
         return "$" + value.length() + CRLF_TERMINATOR + value + CRLF_TERMINATOR;
     }
 
+    public String bulkStringNoTrailingTerminator(String value) {
+        if (value == null) {
+            return "$-1";
+        }
+        return "$" + value.length() + CRLF_TERMINATOR + value;
+    }
+
     public String array(List<String> values) {
         StringBuilder stringBuilder = new StringBuilder("*")
                 .append(values.size())

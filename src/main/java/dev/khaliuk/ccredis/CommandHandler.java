@@ -2,6 +2,8 @@ package dev.khaliuk.ccredis;
 
 import dev.khaliuk.ccredis.command.CommandFactory;
 
+import java.util.List;
+
 public class CommandHandler {
     private final CommandFactory commandFactory;
 
@@ -9,11 +11,11 @@ public class CommandHandler {
         this.commandFactory = commandFactory;
     }
 
-    public String handle(String parsedCommand) {
+    public List<String> handle(String parsedCommand) {
         String[] arguments = parsedCommand.split(" ");
         String command = arguments[0].toUpperCase();
-        String response = commandFactory.getCommandHandler(command).handle(arguments);
-        System.out.println("Debug response: " + response);
-        return response;
+        List<String> responses = commandFactory.getCommandHandler(command).handle(arguments);
+        System.out.println("Debug response: " + responses);
+        return responses;
     }
 }

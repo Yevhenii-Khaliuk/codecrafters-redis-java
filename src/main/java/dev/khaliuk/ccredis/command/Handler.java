@@ -1,5 +1,7 @@
 package dev.khaliuk.ccredis.command;
 
+import java.util.List;
+
 public interface Handler {
-    String handle(String[] arguments);
+    List<String> handle(String[] arguments);
 }
