@@ -10,7 +10,6 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class ReplicaInitializer {
@@ -33,8 +32,8 @@ public class ReplicaInitializer {
         ) {
             // Step 1: PING
             System.out.println("Sending PING request");
-            String request = protocolSerializer.array(List.of("PING"));
-            outputStream.write(request.getBytes(StandardCharsets.UTF_8));
+            byte[] request = protocolSerializer.array(List.of("PING"));
+            outputStream.write(request);
             String response = protocolDeserializer.parseInput(inputStream);
             if (!response.equalsIgnoreCase("PONG")) {
                 throw new RuntimeException("Unexpected response for PING: " + response);
@@ -43,7 +42,7 @@ public class ReplicaInitializer {
             System.out.println("Sending REPLCONF port request");
             request = protocolSerializer.array(
                     List.of("REPLCONF", "listening-port", String.valueOf(applicationProperties.getPort())));
-            outputStream.write(request.getBytes(StandardCharsets.UTF_8));
+            outputStream.write(request);
             response = protocolDeserializer.parseInput(inputStream);
             if (!response.equalsIgnoreCase("OK")) {
                 throw new RuntimeException("Unexpected response for REPLCONF port: " + response);
@@ -51,7 +50,7 @@ public class ReplicaInitializer {
             // Step 3: REPLCONF capa psync2
             System.out.println("Sending REPLCONF capa request");
             request = protocolSerializer.array(List.of("REPLCONF", "capa", "psync2"));
-            outputStream.write(request.getBytes(StandardCharsets.UTF_8));
+            outputStream.write(request);
             response = protocolDeserializer.parseInput(inputStream);
             if (!response.equalsIgnoreCase("OK")) {
                 throw new RuntimeException("Unexpected response for REPLCONF capa: " + response);
@@ -59,7 +58,7 @@ public class ReplicaInitializer {
             // Step 4: PSYNC ? -1
             System.out.println("Sending PSYNC request");
             request = protocolSerializer.array(List.of("PSYNC", "?", "-1"));
-            outputStream.write(request.getBytes(StandardCharsets.UTF_8));
+            outputStream.write(request);
             response = protocolDeserializer.parseInput(inputStream);
             if (!response.startsWith("FULLRESYNC")) {
                 throw new RuntimeException("Unexpected response for PSYNC: " + response);

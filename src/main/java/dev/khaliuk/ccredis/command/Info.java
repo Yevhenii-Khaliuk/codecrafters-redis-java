@@ -12,10 +12,10 @@ public class Info extends AbstractHandler {
     }
 
     @Override
-    public List<String> handle(String[] arguments) {
+    public byte[] handle(String[] arguments) {
         String parameter = arguments[1].toLowerCase();
         return switch (parameter) {
-            case "replication" -> List.of(objectFactory.getProtocolSerializer().bulkString(getReplicationInfo()));
+            case "replication" -> objectFactory.getProtocolSerializer().bulkString(getReplicationInfo());
             default -> throw new RuntimeException("Unknown parameter: " + parameter);
         };
     }

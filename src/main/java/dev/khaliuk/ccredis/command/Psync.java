@@ -1,10 +1,9 @@
 package dev.khaliuk.ccredis.command;
 
 import dev.khaliuk.ccredis.config.ObjectFactory;
+import org.apache.commons.lang3.ArrayUtils;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.List;
 
 public class Psync extends AbstractHandler {
     private static final String EMPTY_RDB_FILE =
@@ -15,16 +14,14 @@ public class Psync extends AbstractHandler {
     }
 
     @Override
-    public List<String> handle(String[] arguments) {
+    public byte[] handle(String[] arguments) {
         String replicationId = objectFactory.getApplicationProperties().getReplicationId();
         Long replicationOffset = objectFactory.getApplicationProperties().getReplicationOffset();
-        String response = String.format("FULLRESYNC %s %s", replicationId, replicationOffset);
-        // TODO: investigate "Error while parsing RDB file : Unexpected CRLF at the end."
-        String rdbFile = new String(
-                Base64.getDecoder().decode(EMPTY_RDB_FILE.getBytes(StandardCharsets.US_ASCII)),
-                StandardCharsets.US_ASCII);
-        return List.of(
-                objectFactory.getProtocolSerializer().simpleString(response),
-                objectFactory.getProtocolSerializer().bulkStringNoTrailingTerminator(rdbFile));
+        String fullResync = String.format("FULLRESYNC %s %s", replicationId, replicationOffset);
+        byte[] fullResyncResponse = objectFactory.getProtocolSerializer().simpleString(fullResync);
+        byte[] rdbFile = Base64.getDecoder().decode(EMPTY_RDB_FILE);
+        byte[] sizePrefix = ("$" + rdbFile.length + "\r\n").getBytes();
+        byte[] response = ArrayUtils.addAll(fullResyncResponse, sizePrefix);
+        return ArrayUtils.addAll(response, rdbFile);
     }
 }

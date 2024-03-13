@@ -8,8 +8,6 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 // TODO: event loop
 public class ConnectionHandler extends Thread {
@@ -30,14 +28,9 @@ public class ConnectionHandler extends Thread {
 
             while (true) {
                 String parsedCommand = protocolDeserializer.parseInput(inputStream);
-                List<String> responses = commandHandler.handle(parsedCommand);
-                responses.forEach(response -> {
-                    try {
-                        outputStream.write(response.getBytes(StandardCharsets.UTF_8));
-                    } catch (IOException e) {
-                        System.out.println("IOException: " + e.getMessage());
-                    }
-                });
+                byte[] response = commandHandler.handle(parsedCommand);
+                outputStream.write(response);
+                outputStream.flush();
                 // TODO: handle end of input
             }
 
