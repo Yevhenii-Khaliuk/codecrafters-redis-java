@@ -2,6 +2,7 @@ package dev.khaliuk.ccredis.command;
 
 import dev.khaliuk.ccredis.config.ObjectFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 
@@ -18,7 +19,10 @@ public class Psync extends AbstractHandler {
         String replicationId = objectFactory.getApplicationProperties().getReplicationId();
         Long replicationOffset = objectFactory.getApplicationProperties().getReplicationOffset();
         String response = String.format("FULLRESYNC %s %s", replicationId, replicationOffset);
-        String rdbFile = new String(Base64.getDecoder().decode(EMPTY_RDB_FILE));
+        // TODO: investigate "Error while parsing RDB file : Unexpected CRLF at the end."
+        String rdbFile = new String(
+                Base64.getDecoder().decode(EMPTY_RDB_FILE.getBytes(StandardCharsets.US_ASCII)),
+                StandardCharsets.US_ASCII);
         return List.of(
                 objectFactory.getProtocolSerializer().simpleString(response),
                 objectFactory.getProtocolSerializer().bulkStringNoTrailingTerminator(rdbFile));
