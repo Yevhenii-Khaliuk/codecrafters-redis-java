@@ -13,7 +13,7 @@ public class ApplicationProperties {
 
     // Master properties
     private String replicationId;
-    private Long replicationOffset;
+    private Long replicationOffset = 0L;
     private List<Socket> replicas;
 
     public ApplicationProperties(String[] args) {
@@ -45,6 +45,10 @@ public class ApplicationProperties {
 
     public Long getReplicationOffset() {
         return replicationOffset;
+    }
+
+    public void setReplicationOffset(Long replicationOffset) {
+        this.replicationOffset = replicationOffset;
     }
 
     public synchronized List<Socket> getReplicas() {

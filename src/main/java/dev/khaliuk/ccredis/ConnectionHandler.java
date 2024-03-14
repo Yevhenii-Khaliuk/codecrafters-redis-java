@@ -9,6 +9,7 @@ import dev.khaliuk.ccredis.config.ObjectFactory;
 import dev.khaliuk.ccredis.exception.EndOfStreamException;
 import dev.khaliuk.ccredis.protocol.ProtocolDeserializer;
 import dev.khaliuk.ccredis.replica.CommandReplicator;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -39,7 +40,8 @@ public class ConnectionHandler extends Thread {
             OutputStream outputStream = socket.getOutputStream();
 
             while (true) {
-                String commandString = protocolDeserializer.parseInput(inputStream);
+                Pair<String, Long> stringLongPair = protocolDeserializer.parseInput(inputStream);
+                String commandString = stringLongPair.getLeft();
                 String[] arguments = commandString.split(" ");
                 String command = arguments[0].toUpperCase();
                 Handler handler = commandFactory.getCommandHandler(command);
