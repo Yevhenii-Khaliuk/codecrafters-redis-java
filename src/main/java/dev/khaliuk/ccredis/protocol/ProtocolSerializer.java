@@ -28,4 +28,8 @@ public class ProtocolSerializer {
         }
         return response;
     }
+
+    public byte[] integer(Integer value) {
+        return (":" + value + CRLF_TERMINATOR).getBytes();
+    }
 }

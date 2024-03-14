@@ -39,7 +39,8 @@ public class CommandFactory {
         PING(Ping.class),
         PSYNC(Psync.class),
         REPLCONF(ReplConf.class),
-        SET(Set.class);
+        SET(Set.class),
+        WAIT(Wait.class);
 
         private final Class<? extends Handler> handler;
 
