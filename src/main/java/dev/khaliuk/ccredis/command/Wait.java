@@ -13,6 +13,7 @@ public class Wait extends AbstractHandler {
         if (!(NumberUtils.isDigits(arguments[1]) && NumberUtils.isDigits(arguments[2]))) {
             throw new IllegalArgumentException(String.format("Digits expected: %s, %s", arguments[1], arguments[2]));
         }
-        return objectFactory.getProtocolSerializer().integer(0);
+        var replicasNumber = objectFactory.getApplicationProperties().getReplicas().size();
+        return objectFactory.getProtocolSerializer().integer(replicasNumber);
     }
 }
