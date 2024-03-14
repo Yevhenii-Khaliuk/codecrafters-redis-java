@@ -28,6 +28,19 @@ public class ProtocolDeserializer {
         }
     }
 
+    public String parseRdbFile(DataInputStream inputStream) throws IOException {
+        char c = (char) inputStream.readByte();
+        if (c != '$') {
+            throw new RuntimeException("Unexpected start of RDB file string: " + c);
+        }
+        int stringLength = parseDigits(inputStream);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < stringLength; i++) {
+            stringBuilder.append((char) inputStream.readByte());
+        }
+        return stringBuilder.toString();
+    }
+
     private String parseArray(DataInputStream inputStream) throws IOException {
         int arraySize = parseDigits(inputStream);
         return IntStream.range(0, arraySize)

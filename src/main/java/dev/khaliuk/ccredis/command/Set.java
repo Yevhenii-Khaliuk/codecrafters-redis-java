@@ -3,7 +3,7 @@ package dev.khaliuk.ccredis.command;
 import dev.khaliuk.ccredis.config.ObjectFactory;
 import dev.khaliuk.ccredis.storage.Storage;
 
-public class Set extends AbstractHandler {
+public class Set extends AbstractHandler implements Write {
     public Set(ObjectFactory objectFactory) {
         super(objectFactory);
     }

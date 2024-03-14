@@ -1,5 +1,7 @@
 package dev.khaliuk.ccredis.replica;
 
+import dev.khaliuk.ccredis.command.CommandFactory;
+import dev.khaliuk.ccredis.command.Handler;
 import dev.khaliuk.ccredis.config.ApplicationProperties;
 import dev.khaliuk.ccredis.config.ObjectFactory;
 import dev.khaliuk.ccredis.config.ReplicaProperties;
@@ -12,18 +14,21 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
 
-public class ReplicaInitializer {
+public class ReplicaRunner extends Thread {
     private final ApplicationProperties applicationProperties;
     private final ProtocolSerializer protocolSerializer;
     private final ProtocolDeserializer protocolDeserializer;
+    private final CommandFactory commandFactory;
 
-    public ReplicaInitializer(ObjectFactory objectFactory) {
-        this.applicationProperties = objectFactory.getApplicationProperties();
-        this.protocolSerializer = objectFactory.getProtocolSerializer();
-        this.protocolDeserializer = objectFactory.getProtocolDeserializer();
+    public ReplicaRunner(ObjectFactory objectFactory) {
+        applicationProperties = objectFactory.getApplicationProperties();
+        protocolSerializer = objectFactory.getProtocolSerializer();
+        protocolDeserializer = objectFactory.getProtocolDeserializer();
+        commandFactory = objectFactory.getCommandFactory();
     }
 
-    public void init() throws IOException {
+    @Override
+    public void run() {
         ReplicaProperties replicaProperties = applicationProperties.getReplica();
 
         try (Socket master = new Socket(replicaProperties.host(), replicaProperties.port());
@@ -63,6 +68,21 @@ public class ReplicaInitializer {
             if (!response.startsWith("FULLRESYNC")) {
                 throw new RuntimeException("Unexpected response for PSYNC: " + response);
             }
+
+            protocolDeserializer.parseRdbFile(inputStream);
+
+            System.out.println("Replica has started");
+
+            while (true) {
+                String commandString = protocolDeserializer.parseInput(inputStream);
+                System.out.println("Replica has received replication command: " + commandString);
+                String[] arguments = commandString.split(" ");
+                String command = arguments[0].toUpperCase();
+                Handler handler = commandFactory.getCommandHandler(command);
+                handler.handle(arguments);
+            }
+        } catch (IOException e) {
+            System.out.println("IOException: " + e.getMessage());
         }
     }
 }
