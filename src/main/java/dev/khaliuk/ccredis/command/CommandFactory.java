@@ -37,6 +37,7 @@ public class CommandFactory {
         ECHO(Echo.class),
         GET(Get.class),
         INFO(Info.class),
+        KEYS(Keys.class),
         PING(Ping.class),
         PSYNC(Psync.class),
         REPLCONF(ReplConf.class),

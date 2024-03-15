@@ -3,6 +3,7 @@ package dev.khaliuk.ccredis.config;
 import dev.khaliuk.ccredis.command.CommandFactory;
 import dev.khaliuk.ccredis.protocol.ProtocolDeserializer;
 import dev.khaliuk.ccredis.protocol.ProtocolSerializer;
+import dev.khaliuk.ccredis.protocol.RdbProcessor;
 import dev.khaliuk.ccredis.replica.CommandReplicator;
 
 import java.lang.reflect.InvocationTargetException;
@@ -13,6 +14,7 @@ public class ObjectFactory {
     private ProtocolSerializer protocolSerializer;
     private CommandFactory commandFactory;
     private CommandReplicator commandReplicator;
+    private RdbProcessor rdbProcessor;
 
     public ObjectFactory(ApplicationProperties applicationProperties) throws InvocationTargetException,
             NoSuchMethodException, InstantiationException, IllegalAccessException {
@@ -40,11 +42,16 @@ public class ObjectFactory {
         return commandReplicator;
     }
 
+    public RdbProcessor getRdbProcessor() {
+        return rdbProcessor;
+    }
+
     private void init() throws InvocationTargetException, NoSuchMethodException, InstantiationException,
             IllegalAccessException {
         protocolDeserializer = new ProtocolDeserializer();
         protocolSerializer = new ProtocolSerializer();
         commandFactory = new CommandFactory(this);
         commandReplicator = new CommandReplicator(this);
+        rdbProcessor = new RdbProcessor(applicationProperties);
     }
 }
