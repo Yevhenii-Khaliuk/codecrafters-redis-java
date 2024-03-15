@@ -25,9 +25,6 @@ public class ReplConf extends AbstractHandler {
                 }
                 break;
             case "getack":
-                if (!"*".equals(arguments[2])) {
-                    throw new RuntimeException("Unknown parameter: " + arguments[2]);
-                }
                 var offset = objectFactory.getApplicationProperties().getReplicationOffset();
                 return objectFactory.getProtocolSerializer().array(List.of("REPLCONF", "ACK", offset.toString()));
             default:

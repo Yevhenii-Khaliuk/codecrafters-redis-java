@@ -51,6 +51,9 @@ public class ConnectionHandler extends Thread {
                     isReplicaSocket = true;
                     applicationProperties.addReplica(socket);
                     System.out.printf("Replica with port %s has been added%n", socket.getPort());
+                    outputStream.write(response);
+                    outputStream.flush();
+                    return; // we want the loop to break here and consequently the thread to stop
                 }
 
                 if (handler instanceof Write) {

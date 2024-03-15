@@ -3,17 +3,19 @@ package dev.khaliuk.ccredis.protocol;
 import dev.khaliuk.ccredis.exception.EndOfStreamException;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
 public class ProtocolDeserializer {
     public Pair<String, Long> parseInput(DataInputStream inputStream) {
         try {
-            char c = (char) inputStream.readByte();
+            char c = (char) readByteWithDebug(inputStream);
 
             var parsedResult = switch (c) {
                 case '*' -> parseArray(inputStream);
@@ -57,37 +59,41 @@ public class ProtocolDeserializer {
         long bytesCounter = parsedResult.getRight();
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < parsedResult.getLeft(); i++) {
-            stringBuilder.append((char) inputStream.readByte());
+            stringBuilder.append((char) readByteWithDebug(inputStream));
             bytesCounter++;
         }
         // TODO: check whether it's expected terminating symbol
-        inputStream.readByte(); // skip terminating '\r'
-        inputStream.readByte(); // skip terminating '\n'
+        readByteWithDebug(inputStream); // skip terminating '\r'
+        readByteWithDebug(inputStream); // skip terminating '\n'
         bytesCounter += 2;
         return Pair.of(stringBuilder.toString(), bytesCounter);
     }
 
     private Pair<String, Long> parseSimpleString(DataInputStream inputStream) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         long bytesCount = 0L;
-        char c = (char) inputStream.readByte();
+        byte b = readByteWithDebug(inputStream);
         bytesCount++;
-        List<Character> characters = new ArrayList<>();
-        while (c != '\r') {
-            characters.add(c);
-            c = (char) inputStream.readByte();
+        while (b != 13) { // 13 means '\r'
+            buffer.write(b);
+            b = readByteWithDebug(inputStream);
             bytesCount++;
         }
         // TODO: check whether it's expected terminating symbol
-        inputStream.readByte(); // skip '\n' after '\r'
+        readByteWithDebug(inputStream);
         bytesCount++;
 
-        StringBuilder stringBuilder = new StringBuilder();
-        characters.forEach(stringBuilder::append);
-        return Pair.of(stringBuilder.toString(), bytesCount);
+        return Pair.of(buffer.toString(), bytesCount);
     }
 
     private Pair<Integer, Long> parseDigits(DataInputStream inputStream) throws IOException {
         Pair<String, Long> parsedResult = parseSimpleString(inputStream);
         return Pair.of(Integer.parseInt(parsedResult.getLeft()), parsedResult.getRight());
+    }
+
+    private byte readByteWithDebug(DataInputStream inputStream) throws IOException {
+        byte b = inputStream.readByte();
+//        System.out.println(Thread.currentThread().getName() + ": Got byte: " + b);
+        return b;
     }
 }
