@@ -42,6 +42,7 @@ public class ConnectionHandler extends Thread {
             while (true) {
                 Pair<String, Long> stringLongPair = protocolDeserializer.parseInput(inputStream);
                 String commandString = stringLongPair.getLeft();
+                System.out.println("Got command: " + commandString);
                 String[] arguments = commandString.split(" ");
                 String command = arguments[0].toUpperCase();
                 Handler handler = commandFactory.getCommandHandler(command);

@@ -7,6 +7,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -31,6 +32,7 @@ public class Wait extends AbstractHandler {
         long timeoutMillis = Long.parseLong(arguments[2]);
         System.out.println("Received WAIT arguments: replicas " + expectedReplicasNumber + ", timeout " + timeoutMillis);
         List<Socket> replicas = objectFactory.getApplicationProperties().getReplicas();
+        System.out.println(LocalTime.now() + ": Found " + replicas.size() + " replicas");
         Stream<CompletableFuture<Void>> futures = replicas.stream()
                 .map(replica -> CompletableFuture.runAsync(() -> getAcknowledgement(replica)));
         if (timeoutMillis > 0) {
@@ -44,10 +46,12 @@ public class Wait extends AbstractHandler {
         }
         int ackNumber = acknowledgedReplicasNumber.intValue();
         acknowledgedReplicasNumber.set(0);
+        System.out.println(LocalTime.now() + ": Counter after all futures completed: " + ackNumber);
         return objectFactory.getProtocolSerializer().integer(ackNumber == 0 ? replicas.size() : ackNumber);
     }
 
     private void getAcknowledgement(Socket replica) {
+        System.out.println(LocalTime.now() + ": Start sending ack request");
         byte[] command = objectFactory.getProtocolSerializer().array(List.of("REPLCONF", "GETACK", "*"));
         try {
             OutputStream outputStream = replica.getOutputStream();
@@ -55,7 +59,7 @@ public class Wait extends AbstractHandler {
             outputStream.flush();
             DataInputStream inputStream = new DataInputStream(replica.getInputStream());
             String response = objectFactory.getProtocolDeserializer().parseInput(inputStream).getLeft();
-            System.out.println("Got response: " + response);
+            System.out.println(LocalTime.now() + ": Got response: " + response);
             acknowledgedReplicasNumber.incrementAndGet();
             // TODO: check offset if needed
         } catch (IOException e) {
