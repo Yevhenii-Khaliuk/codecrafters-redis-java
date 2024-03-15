@@ -16,6 +16,10 @@ public class ApplicationProperties {
     private Long replicationOffset = 0L;
     private List<Socket> replicas;
 
+    // RDB file properties
+    private String dir;
+    private String dbFilename;
+
     public ApplicationProperties(String[] args) {
         parseArgs(args);
         if (isMaster()) {
@@ -65,6 +69,14 @@ public class ApplicationProperties {
         replicas.add(socket);
     }
 
+    public String getDir() {
+        return dir;
+    }
+
+    public String getDbFilename() {
+        return dbFilename;
+    }
+
     private void parseArgs(String[] args) {
         for (int i = 0; i < args.length; i++) {
             String parameter = args[i].toLowerCase().substring(2);
@@ -76,6 +88,14 @@ public class ApplicationProperties {
                 case "replicaof":
                     replicaProperties = new ReplicaProperties(args[i + 1], Integer.parseInt(args[i + 2]));
                     i += 2;
+                    break;
+                case "dir":
+                    dir = args[i + 1];
+                    i++;
+                    break;
+                case "dbfilename":
+                    dbFilename = args[i + 1];
+                    i++;
                     break;
                 default:
                     throw new RuntimeException("Unknown parameter: " + parameter);

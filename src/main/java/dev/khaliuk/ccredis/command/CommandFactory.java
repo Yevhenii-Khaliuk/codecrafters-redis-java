@@ -33,6 +33,7 @@ public class CommandFactory {
     }
 
     private enum Command {
+        CONFIG(Config.class),
         ECHO(Echo.class),
         GET(Get.class),
         INFO(Info.class),
