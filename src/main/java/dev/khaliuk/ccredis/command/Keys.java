@@ -12,12 +12,13 @@ public class Keys extends AbstractHandler {
 
     @Override
     public byte[] handle(String[] arguments) {
-        byte[] firstKey;
+        List<byte[]> keys;
         try {
-            firstKey = objectFactory.getRdbProcessor().readFirstKey();
+            keys = objectFactory.getRdbProcessor().readALlKeys();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return objectFactory.getProtocolSerializer().array(List.of(new String(firstKey)));
+
+        return objectFactory.getProtocolSerializer().array(keys.stream().map(String::new).toList());
     }
 }

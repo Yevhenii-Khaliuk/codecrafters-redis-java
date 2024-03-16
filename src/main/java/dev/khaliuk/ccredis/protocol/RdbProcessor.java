@@ -9,6 +9,8 @@ import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RdbProcessor {
     private final ApplicationProperties applicationProperties;
@@ -19,6 +21,31 @@ public class RdbProcessor {
 
     public byte[] readFirstKey() throws IOException {
         return readFirstKeyValuePair().getKey();
+    }
+
+    public List<byte[]> readALlKeys() throws IOException {
+        String dir = applicationProperties.getDir();
+        String dbFilename = applicationProperties.getDbFilename();
+        String fullFilename = String.format("%s/%s", dir, dbFilename);
+        try (DataInputStream inputStream = new DataInputStream(new FileInputStream(fullFilename))) {
+
+            // Step 1: traverse the file up to resizedb field, which is indicated by 0xFB byte
+            byte b = inputStream.readByte();
+            while ((b & 0xFB) != 0xFB) {
+                b = inputStream.readByte();
+            }
+
+            // Step 2: read 2 length-encoded sizes - hash table and expire hash table
+            readLengthEncodedInt(inputStream);
+            readLengthEncodedInt(inputStream);
+
+            // Step 3: key-value pairs
+            return readAllKeys(inputStream);
+
+        } catch (FileNotFoundException e) {
+            System.out.println("RDB file is not present");
+            return List.of(new byte[]{});
+        }
     }
 
     public Pair<byte[], byte[]> readFirstKeyValuePair() throws IOException {
@@ -147,6 +174,8 @@ public class RdbProcessor {
             // expiry time in ms, 8 bytes; skip for now
             for (int i = 0; i < 8; i++) inputStream.readByte();
             valueType = inputStream.readByte();
+        } else if ((first & 0xFF) == 0xFF) {
+            throw new EndOfRdbFileException();
         } else {
             valueType = first;
         }
@@ -161,5 +190,20 @@ public class RdbProcessor {
         }
 
         return Pair.of(key, value);
+    }
+
+    private List<byte[]> readAllKeys(DataInputStream inputStream) throws IOException {
+        List<byte[]> keys = new ArrayList<>();
+        try {
+            while (true) {
+                keys.add(readKeyValuePair(inputStream).getKey());
+            }
+        } catch (EndOfRdbFileException e) {
+            System.out.println("End of RDB file reached");
+        }
+        return keys;
+    }
+
+    private class EndOfRdbFileException extends RuntimeException {
     }
 }
