@@ -19,10 +19,6 @@ public class RdbProcessor {
         this.applicationProperties = applicationProperties;
     }
 
-    public byte[] readFirstKey() throws IOException {
-        return readFirstKeyValuePair().getKey();
-    }
-
     public List<byte[]> readALlKeys() throws IOException {
         String dir = applicationProperties.getDir();
         String dbFilename = applicationProperties.getDbFilename();
@@ -183,6 +179,8 @@ public class RdbProcessor {
         byte[] value;
         if (valueType == 0) {
             value = readEncodedString(inputStream);
+        } else if ((valueType & 0xFF) == 0xFF) {
+            throw new EndOfRdbFileException();
         } else {
             // TODO: implement other value types
             System.out.println("Value type is not implemented: " + valueType);
