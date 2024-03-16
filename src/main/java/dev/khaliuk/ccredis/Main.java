@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.LocalTime;
 
 public class Main {
     public static void main(String[] args) throws IOException, InvocationTargetException, NoSuchMethodException,
@@ -26,7 +27,7 @@ public class Main {
                 System.out.println("Start replica init");
                 new ReplicaRunner(objectFactory).start();
             } else {
-                System.out.println("Master has started");
+                System.out.println(LocalTime.now() + ": Master has started");
             }
 
             while (true) {
