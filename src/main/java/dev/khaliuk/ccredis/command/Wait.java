@@ -11,7 +11,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
 public class Wait extends AbstractHandler {
     private static final Logger LOGGER = new Logger(Wait.class);
@@ -34,11 +33,13 @@ public class Wait extends AbstractHandler {
         List<ReplicaClient> replicas = objectFactory.getApplicationProperties().getReplicas();
         LOGGER.log("Found " + replicas.size() + " replicas");
 
-        Stream<CompletableFuture<Boolean>> futures = replicas.stream()
-                .map(replica -> mapToFuture(replica, timeoutMillis));
+        CompletableFuture[] completableFutures = replicas
+            .stream()
+            .map(replica -> mapToFuture(replica, timeoutMillis))
+            .toArray(CompletableFuture[]::new);
 
         try {
-            CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).get();
+            CompletableFuture.allOf(completableFutures).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -50,7 +51,8 @@ public class Wait extends AbstractHandler {
     }
 
     private CompletableFuture<Boolean> mapToFuture(ReplicaClient replica, long timeoutMillis) {
-        CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> getAcknowledgement(replica))
+        CompletableFuture<Boolean> future =
+            CompletableFuture.supplyAsync(() -> getAcknowledgement(replica))
                 .whenComplete((result, error) -> {
                     if (Boolean.TRUE.equals(result)) {
                         acknowledgedReplicasNumber.incrementAndGet();
