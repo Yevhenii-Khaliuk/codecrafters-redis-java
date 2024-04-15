@@ -1,8 +1,8 @@
 package dev.khaliuk.ccredis.config;
 
+import dev.khaliuk.ccredis.replica.ReplicaClient;
 import org.apache.commons.codec.digest.DigestUtils;
 
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -14,7 +14,7 @@ public class ApplicationProperties {
     // Master properties
     private String replicationId;
     private Long replicationOffset = 0L;
-    private List<Socket> replicas;
+    private List<ReplicaClient> replicas;
 
     // RDB file properties
     private String dir;
@@ -55,18 +55,19 @@ public class ApplicationProperties {
         this.replicationOffset = replicationOffset;
     }
 
-    public synchronized List<Socket> getReplicas() {
+    public synchronized List<ReplicaClient> getReplicas() {
         if (replicas == null) {
             replicas = new ArrayList<>();
         }
+        replicas = replicas.stream().filter(ReplicaClient::isAvailable).toList();
         return replicas;
     }
 
-    public synchronized void addReplica(Socket socket) {
+    public synchronized void addReplica(ReplicaClient replica) {
         if (replicas == null) {
             replicas = new ArrayList<>();
         }
-        replicas.add(socket);
+        replicas.add(replica);
     }
 
     public String getDir() {

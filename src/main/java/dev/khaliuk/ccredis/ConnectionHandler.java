@@ -5,10 +5,12 @@ import dev.khaliuk.ccredis.command.Handler;
 import dev.khaliuk.ccredis.command.Psync;
 import dev.khaliuk.ccredis.command.Write;
 import dev.khaliuk.ccredis.config.ApplicationProperties;
+import dev.khaliuk.ccredis.config.Logger;
 import dev.khaliuk.ccredis.config.ObjectFactory;
 import dev.khaliuk.ccredis.exception.EndOfStreamException;
 import dev.khaliuk.ccredis.protocol.ProtocolDeserializer;
 import dev.khaliuk.ccredis.replica.CommandReplicator;
+import dev.khaliuk.ccredis.replica.ReplicaClient;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.DataInputStream;
@@ -17,6 +19,8 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 public class ConnectionHandler extends Thread {
+    private static final Logger LOGGER = new Logger(ConnectionHandler.class);
+
     private final Socket socket;
     private final ProtocolDeserializer protocolDeserializer;
     private final CommandFactory commandFactory;
@@ -42,7 +46,7 @@ public class ConnectionHandler extends Thread {
             while (true) {
                 Pair<String, Long> stringLongPair = protocolDeserializer.parseInput(inputStream);
                 String commandString = stringLongPair.getLeft();
-                System.out.println("Got command: " + commandString);
+                LOGGER.log("Got command: " + commandString);
                 String[] arguments = commandString.split(" ");
                 String command = arguments[0].toUpperCase();
                 Handler handler = commandFactory.getCommandHandler(command);
@@ -50,32 +54,36 @@ public class ConnectionHandler extends Thread {
 
                 if (handler instanceof Psync) {
                     isReplicaSocket = true;
-                    applicationProperties.addReplica(socket);
-                    System.out.printf("Replica with port %s has been added%n", socket.getPort());
+                    applicationProperties.addReplica(new ReplicaClient(socket, protocolDeserializer));
+                    LOGGER.log(String.format("Replica with port %s has been added%n", socket.getPort()));
                     outputStream.write(response);
                     outputStream.flush();
                     return; // we want the loop to break here and consequently the thread to stop
                 }
 
                 if (handler instanceof Write) {
+                    LOGGER.log("Start replicate command: " + commandString);
                     commandReplicator.replicateWriteCommand(commandString);
+                    LOGGER.log("Command is sent for replication");
                 }
 
+                LOGGER.log("End handling with response: " + new String(response));
                 outputStream.write(response);
                 outputStream.flush();
+                LOGGER.log("Response sent");
             }
 
         } catch (EndOfStreamException e) {
-            System.out.println("End of input stream reached");
+            LOGGER.log("End of input stream reached");
         } catch (IOException e) {
-            System.out.println("IOException: " + e.getMessage());
+            LOGGER.log("IOException: " + e.getMessage());
         } finally {
             if (!isReplicaSocket) {
                 try {
                     socket.close();
-                    System.out.printf("%s socket closed%n", getName());
+                    LOGGER.log(String.format("%s socket closed%n", getName()));
                 } catch (IOException e) {
-                    System.out.println("IOException: " + e.getMessage());
+                    LOGGER.log("IOException: " + e.getMessage());
                 }
             }
         }

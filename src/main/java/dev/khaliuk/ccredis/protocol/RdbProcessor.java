@@ -2,6 +2,7 @@ package dev.khaliuk.ccredis.protocol;
 
 import com.ning.compress.lzf.LZFDecoder;
 import dev.khaliuk.ccredis.config.ApplicationProperties;
+import dev.khaliuk.ccredis.config.Logger;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.ByteArrayOutputStream;
@@ -13,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RdbProcessor {
+    private static final Logger LOGGER = new Logger(RdbProcessor.class);
+
     private final ApplicationProperties applicationProperties;
 
     public RdbProcessor(ApplicationProperties applicationProperties) {
@@ -39,7 +42,7 @@ public class RdbProcessor {
             return readAllKeys(inputStream);
 
         } catch (FileNotFoundException e) {
-            System.out.println("RDB file is not present");
+            LOGGER.log("RDB file is not present");
             return List.of(new byte[]{});
         }
     }
@@ -62,12 +65,12 @@ public class RdbProcessor {
 
             // Step 3: key-value pairs
             Pair<byte[], byte[]> pair = readKeyValuePair(inputStream);
-            System.out.printf("First pair read, key: %s, value: %s%n",
-                    new String(pair.getKey()), new String(pair.getValue()));
+            LOGGER.log(String.format("First pair read, key: %s, value: %s%n",
+                    new String(pair.getKey()), new String(pair.getValue())));
             return pair;
 
         } catch (FileNotFoundException e) {
-            System.out.println("RDB file is not present");
+            LOGGER.log("RDB file is not present");
             return Pair.of(new byte[]{}, new byte[]{});
         }
     }
@@ -183,7 +186,7 @@ public class RdbProcessor {
             throw new EndOfRdbFileException();
         } else {
             // TODO: implement other value types
-            System.out.println("Value type is not implemented: " + valueType);
+            LOGGER.log("Value type is not implemented: " + valueType);
             value = new byte[]{};
         }
 
@@ -197,7 +200,7 @@ public class RdbProcessor {
                 keys.add(readKeyValuePair(inputStream).getKey());
             }
         } catch (EndOfRdbFileException e) {
-            System.out.println("End of RDB file reached");
+            LOGGER.log("End of RDB file reached");
         }
         return keys;
     }
