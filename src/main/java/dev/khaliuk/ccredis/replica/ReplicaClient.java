@@ -1,33 +1,28 @@
 package dev.khaliuk.ccredis.replica;
 
 import dev.khaliuk.ccredis.config.Logger;
-import dev.khaliuk.ccredis.protocol.ProtocolDeserializer;
 
-import java.io.DataInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ReplicaClient {
     private static final Logger LOGGER = new Logger(ReplicaClient.class);
 
-    private volatile boolean available = true;
-
     private final Socket replica;
-    private final ProtocolDeserializer protocolDeserializer;
     private final ExecutorService executorService;
 
-    public ReplicaClient(Socket replica, ProtocolDeserializer protocolDeserializer) {
+    public ReplicaClient(Socket replica) {
         this.replica = replica;
-        this.protocolDeserializer = protocolDeserializer;
         executorService = Executors.newSingleThreadExecutor();
-    }
-
-    public boolean isAvailable() {
-        return available;
     }
 
     public void send(byte[] command) {
@@ -35,13 +30,19 @@ public class ReplicaClient {
         executorService.execute(() -> doSend(command));
     }
 
-    public synchronized byte[] sendAndAwaitResponse(byte[] command) {
+    public synchronized byte[] sendAndAwaitResponse(byte[] command, long timeout) {
         log(command);
+        Future<byte[]> future = executorService.submit(() -> doSendAndAwait(command));
         try {
-            return executorService.submit(() -> doSendAndAwait(command)).get();
+            return future.get(timeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException | ExecutionException e) {
-            handleError(e);
+            LOGGER.log("Unexpected error: " + e.getMessage());
             throw new RuntimeException(e);
+        } catch (TimeoutException e) {
+            LOGGER.log("Cancelling task");
+            future.cancel(true);
+            LOGGER.log("Task is cancelled");
+            throw new RuntimeException("Operation timed out");
         }
     }
 
@@ -56,10 +57,19 @@ public class ReplicaClient {
         outputStream.write(command);
         outputStream.flush();
         LOGGER.log("Command sent");
-        DataInputStream inputStream = new DataInputStream(replica.getInputStream());
+        BufferedReader reader = new BufferedReader(new InputStreamReader(replica.getInputStream()));
         LOGGER.log("Waiting for response from input stream");
-        String response = protocolDeserializer.parseInput(inputStream).getLeft();
-        LOGGER.log("Response received");
+        String response;
+        try {
+            while (!reader.ready()) {
+                Thread.sleep(100);
+            }
+            response = reader.readLine();
+            LOGGER.log("Response received");
+        } catch (InterruptedException e) {
+            LOGGER.log("Operation cancelled");
+            return new byte[0];
+        }
         return response.getBytes();
     }
 
@@ -71,15 +81,7 @@ public class ReplicaClient {
             outputStream.flush();
             LOGGER.log("Command sent");
         } catch (IOException e) {
-            handleError(e);
+            LOGGER.log("Unexpected error: " + e.getMessage());
         }
-    }
-
-    private void handleError(Exception e) {
-        // TODO: error handling should be more granular
-        //  and should not mark replica as unavailable for each possible error
-        LOGGER.log("Error during execution: " + e.getMessage());
-        LOGGER.log("Marking current replica as unavailable");
-        available = false;
     }
 }

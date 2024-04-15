@@ -54,7 +54,7 @@ public class ConnectionHandler extends Thread {
 
                 if (handler instanceof Psync) {
                     isReplicaSocket = true;
-                    applicationProperties.addReplica(new ReplicaClient(socket, protocolDeserializer));
+                    applicationProperties.addReplica(new ReplicaClient(socket));
                     LOGGER.log(String.format("Replica with port %s has been added%n", socket.getPort()));
                     outputStream.write(response);
                     outputStream.flush();

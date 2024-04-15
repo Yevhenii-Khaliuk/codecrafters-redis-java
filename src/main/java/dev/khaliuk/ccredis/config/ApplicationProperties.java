@@ -59,7 +59,6 @@ public class ApplicationProperties {
         if (replicas == null) {
             replicas = new ArrayList<>();
         }
-        replicas = replicas.stream().filter(ReplicaClient::isAvailable).toList();
         return replicas;
     }
 

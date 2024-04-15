@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Wait extends AbstractHandler {
@@ -51,24 +50,19 @@ public class Wait extends AbstractHandler {
     }
 
     private CompletableFuture<Boolean> mapToFuture(ReplicaClient replica, long timeoutMillis) {
-        CompletableFuture<Boolean> future =
-            CompletableFuture.supplyAsync(() -> getAcknowledgement(replica))
-                .whenComplete((result, error) -> {
-                    if (Boolean.TRUE.equals(result)) {
-                        acknowledgedReplicasNumber.incrementAndGet();
-                    }
-                });
-        if (timeoutMillis > 0) {
-            future.completeOnTimeout(false, timeoutMillis, TimeUnit.MILLISECONDS);
-        }
-        return future;
+        return CompletableFuture.supplyAsync(() -> getAcknowledgement(replica, timeoutMillis))
+            .whenComplete((result, error) -> {
+                if (Boolean.TRUE.equals(result)) {
+                    acknowledgedReplicasNumber.incrementAndGet();
+                }
+            });
     }
 
-    private boolean getAcknowledgement(ReplicaClient replica) {
+    private boolean getAcknowledgement(ReplicaClient replica, long timeout) {
         LOGGER.log("Start sending ack request");
         byte[] command = objectFactory.getProtocolSerializer().array(List.of("REPLCONF", "GETACK", "*"));
         try {
-            byte[] response = replica.sendAndAwaitResponse(command);
+            byte[] response = replica.sendAndAwaitResponse(command, timeout);
             LOGGER.log("Got response: " + Arrays.toString(response));
             // TODO: check offset here and return 'false' if offset is not the same as the leader's
             return true;
