@@ -11,6 +11,10 @@ public class ProtocolSerializer {
         return ("+" + value + CRLF_TERMINATOR).getBytes();
     }
 
+    public byte[] simpleError(String value) {
+        return ("-" + value + CRLF_TERMINATOR).getBytes();
+    }
+
     public byte[] bulkString(String value) {
         if (value == null) {
             return ("$-1" + CRLF_TERMINATOR).getBytes();
@@ -21,8 +25,8 @@ public class ProtocolSerializer {
     public byte[] array(List<String> values) {
         byte[] response = ("*" + values.size() + CRLF_TERMINATOR).getBytes();
         List<byte[]> bulkStrings = values.stream()
-                .map(this::bulkString)
-                .toList();
+            .map(this::bulkString)
+            .toList();
         for (byte[] bulkString : bulkStrings) {
             response = ArrayUtils.addAll(response, bulkString);
         }

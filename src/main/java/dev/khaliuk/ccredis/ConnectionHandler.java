@@ -70,7 +70,6 @@ public class ConnectionHandler extends Thread {
                 LOGGER.log("End handling with response: " + new String(response));
                 outputStream.write(response);
                 outputStream.flush();
-                LOGGER.log("Response sent");
             }
 
         } catch (EndOfStreamException e) {
