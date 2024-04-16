@@ -2,6 +2,7 @@ package dev.khaliuk.ccredis.protocol;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ProtocolSerializer {
@@ -22,14 +23,25 @@ public class ProtocolSerializer {
         return ("$" + value.length() + CRLF_TERMINATOR + value + CRLF_TERMINATOR).getBytes();
     }
 
-    public byte[] array(List<String> values) {
+    public byte[] array(List values) {
         byte[] response = ("*" + values.size() + CRLF_TERMINATOR).getBytes();
-        List<byte[]> bulkStrings = values.stream()
-            .map(this::bulkString)
-            .toList();
-        for (byte[] bulkString : bulkStrings) {
-            response = ArrayUtils.addAll(response, bulkString);
+
+        List<byte[]> serializedElements = new ArrayList<>();
+
+        for (Object value : values) {
+            if (value instanceof String stringValue) {
+                serializedElements.add(bulkString(stringValue));
+            } else if (value instanceof List listValue) {
+                serializedElements.add(array(listValue));
+            } else {
+                throw new IllegalArgumentException("Unsupported type: " + value.getClass());
+            }
         }
+
+        for (byte[] element : serializedElements) {
+            response = ArrayUtils.addAll(response, element);
+        }
+
         return response;
     }
 

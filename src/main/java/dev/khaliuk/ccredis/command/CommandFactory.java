@@ -44,7 +44,8 @@ public class CommandFactory {
         SET(Set.class),
         TYPE(Type.class),
         WAIT(Wait.class),
-        XADD(Xadd.class);
+        XADD(Xadd.class),
+        XRANGE(Xrange.class);
 
         private final Class<? extends Handler> handler;
 

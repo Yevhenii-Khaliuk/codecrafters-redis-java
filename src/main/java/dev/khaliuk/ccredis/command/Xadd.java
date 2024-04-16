@@ -4,7 +4,7 @@ import dev.khaliuk.ccredis.config.Logger;
 import dev.khaliuk.ccredis.config.ObjectFactory;
 import dev.khaliuk.ccredis.protocol.ValueType;
 import dev.khaliuk.ccredis.storage.Storage;
-import dev.khaliuk.ccredis.storage.StorageRecord;
+import dev.khaliuk.ccredis.storage.StreamRecord;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.time.Instant;
@@ -26,18 +26,21 @@ public class Xadd extends AbstractHandler {
 
     @Override
     public byte[] handle(String[] arguments) {
+        if (arguments.length < 5) {
+            throw new IllegalArgumentException("XADD requires at least 5 arguments, got " + arguments.length);
+        }
+
         String streamKey = arguments[1];
         String streamId = arguments[2];
 
-        List<Pair<String, String>> existingStream =
-            (List<Pair<String, String>>) Optional.ofNullable(Storage.get(streamKey))
+        List<StreamRecord> existingStream =
+            Optional.ofNullable(Storage.get(streamKey))
                 .filter(r -> r.valueType() == ValueType.STREAM)
-                .map(StorageRecord::value)
+                .map(r -> (List<StreamRecord>) r.value())
                 .orElseGet(ArrayList::new);
 
         String latestId = existingStream.reversed().stream()
-            .filter(p -> p.getKey().equals("id"))
-            .map(Pair::getValue)
+            .map(StreamRecord::id)
             .findFirst()
             .orElse(null);
 
@@ -47,14 +50,14 @@ public class Xadd extends AbstractHandler {
             return objectFactory.getProtocolSerializer().simpleError(e.getMessage());
         }
 
-        List<Pair<String, String>> keyValuePairs = new ArrayList<>();
-        keyValuePairs.add(Pair.of("id", streamId));
+        List<Pair<String, String>> streamValues = new ArrayList<>();
 
         for (int i = 3; i < arguments.length - 1; i += 2) {
-            keyValuePairs.add(Pair.of(arguments[i], arguments[i + 1]));
+            streamValues.add(Pair.of(arguments[i], arguments[i + 1]));
         }
 
-        existingStream.addAll(keyValuePairs);
+        StreamRecord newStreamRecord = new StreamRecord(streamId, streamValues);
+        existingStream.add(newStreamRecord);
         Storage.put(streamKey, ValueType.STREAM, existingStream);
 
         return objectFactory.getProtocolSerializer().bulkString(streamId);
