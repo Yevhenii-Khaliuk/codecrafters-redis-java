@@ -7,6 +7,7 @@ import dev.khaliuk.ccredis.storage.Storage;
 import dev.khaliuk.ccredis.storage.StorageRecord;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +35,6 @@ public class Xadd extends AbstractHandler {
                 .map(StorageRecord::value)
                 .orElseGet(ArrayList::new);
 
-        String millisStreamId = streamId.substring(0, streamId.indexOf("-"));
         String latestId = existingStream.reversed().stream()
             .filter(p -> p.getKey().equals("id"))
             .map(Pair::getValue)
@@ -61,15 +61,36 @@ public class Xadd extends AbstractHandler {
     }
 
     private String validateStreamId(String newId, String existingId) {
-        String millisecondsString = newId.substring(0, newId.indexOf("-"));
-        long newMillisecondsTime = Long.parseLong(millisecondsString);
+        long newMillisecondsTime;
+        long newSequenceNumber;
 
-        String sequenceString = newId.substring(newId.indexOf("-") + 1);
-        long newSequenceNumber = existingId == null ?
-            generateNewSequenceNumber(sequenceString, newMillisecondsTime) :
-            generateSequenceNumberWithExistingStream(existingId, newMillisecondsTime, sequenceString);
+        if (newId.equals("*")) {
+            newMillisecondsTime = Instant.now().toEpochMilli();
+            newSequenceNumber = generateNewSequenceNumberWithNewMillis(existingId, newMillisecondsTime);
+        } else {
+            String millisecondsString = newId.substring(0, newId.indexOf("-"));
+            newMillisecondsTime = Long.parseLong(millisecondsString);
 
-        return String.format("%s-%s", millisecondsString, newSequenceNumber);
+            String sequenceString = newId.substring(newId.indexOf("-") + 1);
+            newSequenceNumber = existingId == null ?
+                generateNewSequenceNumber(sequenceString, newMillisecondsTime) :
+                generateSequenceNumberWithExistingStream(existingId, newMillisecondsTime, sequenceString);
+        }
+
+        return String.format("%s-%s", newMillisecondsTime, newSequenceNumber);
+    }
+
+    private long generateNewSequenceNumberWithNewMillis(String existingId, long newMillisecondsTime) {
+        if (existingId != null) {
+            long existingMillisecondsTime = Long.parseLong(existingId.substring(0, existingId.indexOf("-")));
+            if (existingMillisecondsTime == newMillisecondsTime) {
+                return Long.parseLong(existingId.substring(existingId.indexOf("-") + 1));
+            } else {
+                return 0;
+            }
+        } else {
+            return 0;
+        }
     }
 
     private long generateNewSequenceNumber(String sequenceString, long newMillisecondsTime) {
