@@ -3,6 +3,7 @@ package dev.khaliuk.ccredis.protocol;
 import com.ning.compress.lzf.LZFDecoder;
 import dev.khaliuk.ccredis.config.ApplicationProperties;
 import dev.khaliuk.ccredis.config.Logger;
+import dev.khaliuk.ccredis.storage.StorageRecord;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.ByteArrayOutputStream;
@@ -11,6 +12,7 @@ import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +27,7 @@ public class RdbProcessor {
         this.applicationProperties = applicationProperties;
     }
 
-    public List<byte[]> readAllKeys() throws IOException {
+    public List<String> readAllKeys() throws IOException {
         String dir = applicationProperties.getDir();
         String dbFilename = applicationProperties.getDbFilename();
         String fullFilename = String.format("%s/%s", dir, dbFilename);
@@ -46,11 +48,11 @@ public class RdbProcessor {
 
         } catch (FileNotFoundException e) {
             LOGGER.log("RDB file is not present");
-            return List.of(new byte[]{});
+            return List.of();
         }
     }
 
-    public Map<String, String> readAllPairs() throws IOException {
+    public Map<String, StorageRecord> readAllPairs() throws IOException {
         String dir = applicationProperties.getDir();
         String dbFilename = applicationProperties.getDbFilename();
         String fullFilename = String.format("%s/%s", dir, dbFilename);
@@ -67,14 +69,14 @@ public class RdbProcessor {
             readLengthEncodedInt(inputStream);
 
             // Step 3: key-value pairs
-            Map<String, String> result = new HashMap<>();
+            Map<String, StorageRecord> result = new HashMap<>();
             try {
                 while (true) {
-                    Pair<byte[], byte[]> keyValuePair = readKeyValuePair(inputStream);
+                    Pair<String, StorageRecord> keyValuePair = readKeyValuePair(inputStream);
                     if (keyValuePair == null) {
                         continue;
                     }
-                    result.put(new String(keyValuePair.getKey()), new String(keyValuePair.getValue()));
+                    result.put(keyValuePair.getKey(), keyValuePair.getValue());
                 }
             } catch (EndOfRdbFileException | EOFException e) {
                 LOGGER.log("End of RDB file reached");
@@ -130,11 +132,11 @@ public class RdbProcessor {
             stringSize = first;
         } else if ((first & TWO_LEFTMOST_BITS) == 0b0100_0000) {
             byte second = inputStream.readByte();
-            stringSize = (first & 0b0011_1111) << 8 + second & 0xFF;
+            stringSize = ((first & 0b0011_1111) << 8) + (second & 0xFF);
         } else if ((first & 0b1000_0000) > 0) {
             int result = 0;
             for (int i = 0; i < 4; i++) {
-                result = result << 8 + inputStream.readByte() & 0xFF;
+                result = (result << 8) + (inputStream.readByte() & 0xFF);
             }
             stringSize = result;
         } else if ((first & TWO_LEFTMOST_BITS) == TWO_LEFTMOST_BITS) {
@@ -143,13 +145,13 @@ public class RdbProcessor {
             } else if ((first & 0b0011_1111) == 1) {
                 int result = 0;
                 for (int i = 0; i < 2; i++) {
-                    result = result << 8 + inputStream.readByte() & 0xFF;
+                    result = (result << 8) + (inputStream.readByte() & 0xFF);
                 }
                 stringSize = result;
             } else if ((first & 0b0011_1111) == 2) {
                 int result = 0;
                 for (int i = 0; i < 4; i++) {
-                    result = result << 8 + inputStream.readByte() & 0xFF;
+                    result = (result << 8) + (inputStream.readByte() & 0xFF);
                 }
                 stringSize = result;
             } else if ((first & 0b0011_1111) == 3) {
@@ -173,16 +175,23 @@ public class RdbProcessor {
         return buf.toByteArray();
     }
 
-    private Pair<byte[], byte[]> readKeyValuePair(DataInputStream inputStream) throws IOException {
+    private Pair<String, StorageRecord> readKeyValuePair(DataInputStream inputStream) throws IOException {
         byte first = inputStream.readByte();
         byte valueType;
+        Instant expiry = Instant.MAX;
         if ((first & 0xFD) == 0xFD) {
-            // expiry time in seconds, 4 bytes; skip for now
-            for (int i = 0; i < 4; i++) inputStream.readByte();
+            int seconds = 0;
+            for (int i = 0; i < 4; i++) {
+                seconds += ((inputStream.readByte() & 0xFF) << 8 * i);
+            }
+            expiry = Instant.ofEpochSecond(seconds);
             valueType = inputStream.readByte();
         } else if ((first & 0xFC) == 0xFC) {
-            // expiry time in ms, 8 bytes; skip for now
-            for (int i = 0; i < 8; i++) inputStream.readByte();
+            long millis = 0;
+            for (int i = 0; i < 8; i++) {
+                millis += ((long) (inputStream.readByte() & 0xFF) << 8 * i);
+            }
+            expiry = Instant.ofEpochMilli(millis);
             valueType = inputStream.readByte();
         } else if ((first & 0xFF) == 0xFF) {
             throw new EndOfRdbFileException();
@@ -198,18 +207,17 @@ public class RdbProcessor {
         } else {
             // TODO: implement other value types
             LOGGER.log("Value type is not implemented: " + valueType);
-//            value = new byte[]{};
-            return null; // Workaround for now to pass test with a single key
+            return null;
         }
 
-        return Pair.of(key, value);
+        return Pair.of(new String(key), new StorageRecord(new String(value), expiry));
     }
 
-    private List<byte[]> readAllKeys(DataInputStream inputStream) throws IOException {
-        List<byte[]> keys = new ArrayList<>();
+    private List<String> readAllKeys(DataInputStream inputStream) throws IOException {
+        List<String> keys = new ArrayList<>();
         try {
             while (true) {
-                Pair<byte[], byte[]> keyValuePair = readKeyValuePair(inputStream);
+                Pair<String, StorageRecord> keyValuePair = readKeyValuePair(inputStream);
                 if (keyValuePair == null) {
                     continue;
                 }
