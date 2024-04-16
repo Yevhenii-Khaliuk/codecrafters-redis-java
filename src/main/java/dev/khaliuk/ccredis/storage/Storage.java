@@ -12,12 +12,16 @@ public class Storage {
     private Storage() {
     }
 
-    public static void put(String key, String value) {
+    public static void put(String key, Object value) {
         cache.put(key, new StorageRecord(ValueType.STRING, value, Instant.MAX));
     }
 
     public static void put(String key, String value, Long expiration) {
         cache.put(key, new StorageRecord(ValueType.STRING, value, Instant.now().plusMillis(expiration)));
+    }
+
+    public static void put(String key, ValueType valueType, Object value) {
+        cache.put(key, new StorageRecord(valueType, value, Instant.MAX));
     }
 
     public static StorageRecord get(String key) {

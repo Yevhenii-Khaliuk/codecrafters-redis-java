@@ -43,7 +43,8 @@ public class CommandFactory {
         REPLCONF(ReplConf.class),
         SET(Set.class),
         TYPE(Type.class),
-        WAIT(Wait.class);
+        WAIT(Wait.class),
+        XADD(Xadd.class);
 
         private final Class<? extends Handler> handler;
 
