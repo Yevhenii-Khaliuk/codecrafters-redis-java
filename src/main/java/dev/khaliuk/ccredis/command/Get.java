@@ -7,8 +7,8 @@ import dev.khaliuk.ccredis.storage.StorageRecord;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 
 public class Get extends AbstractHandler {
     private static final Logger LOGGER = new Logger(Get.class);
@@ -19,14 +19,15 @@ public class Get extends AbstractHandler {
 
     @Override
     public byte[] handle(String[] arguments) {
-        LOGGER.log("Arguments: " + Arrays.toString(arguments));
         String value;
         if (objectFactory.getApplicationProperties().getDir() == null) {
-            value = Storage.get(arguments[1]);
+            StorageRecord storageRecord = Storage.get(arguments[1]);
+            value = Optional.ofNullable(storageRecord)
+                .map(StorageRecord::value)
+                .orElse(null);
         } else {
             try {
                 Map<String, StorageRecord> pairs = objectFactory.getRdbProcessor().readAllPairs();
-                LOGGER.log("Pairs read: " + pairs);
                 StorageRecord recordValue = pairs.get(arguments[1]);
                 if (Instant.now().isAfter(recordValue.expiration())) {
                     value = null;

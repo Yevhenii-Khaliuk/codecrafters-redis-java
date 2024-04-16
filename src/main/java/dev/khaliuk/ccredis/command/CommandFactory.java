@@ -42,6 +42,7 @@ public class CommandFactory {
         PSYNC(Psync.class),
         REPLCONF(ReplConf.class),
         SET(Set.class),
+        TYPE(Type.class),
         WAIT(Wait.class);
 
         private final Class<? extends Handler> handler;

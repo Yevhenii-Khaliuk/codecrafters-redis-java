@@ -1,5 +1,7 @@
 package dev.khaliuk.ccredis.storage;
 
+import dev.khaliuk.ccredis.protocol.ValueType;
+
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,14 +13,14 @@ public class Storage {
     }
 
     public static void put(String key, String value) {
-        cache.put(key, new StorageRecord(value, Instant.MAX));
+        cache.put(key, new StorageRecord(ValueType.STRING, value, Instant.MAX));
     }
 
     public static void put(String key, String value, Long expiration) {
-        cache.put(key, new StorageRecord(value, Instant.now().plusMillis(expiration)));
+        cache.put(key, new StorageRecord(ValueType.STRING, value, Instant.now().plusMillis(expiration)));
     }
 
-    public static String get(String key) {
+    public static StorageRecord get(String key) {
         StorageRecord storageRecord = cache.get(key);
         if (storageRecord == null) {
             return null;
@@ -27,7 +29,7 @@ public class Storage {
             remove(key);
             return null;
         }
-        return storageRecord.value();
+        return storageRecord;
     }
 
     public static void remove(String key) {

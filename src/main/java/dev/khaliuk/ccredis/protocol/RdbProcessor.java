@@ -177,40 +177,42 @@ public class RdbProcessor {
 
     private Pair<String, StorageRecord> readKeyValuePair(DataInputStream inputStream) throws IOException {
         byte first = inputStream.readByte();
-        byte valueType;
         Instant expiry = Instant.MAX;
+        byte valueTypeByte;
+        ValueType valueType;
         if ((first & 0xFD) == 0xFD) {
             int seconds = 0;
             for (int i = 0; i < 4; i++) {
                 seconds += ((inputStream.readByte() & 0xFF) << 8 * i);
             }
             expiry = Instant.ofEpochSecond(seconds);
-            valueType = inputStream.readByte();
+            valueTypeByte = inputStream.readByte();
         } else if ((first & 0xFC) == 0xFC) {
             long millis = 0;
             for (int i = 0; i < 8; i++) {
                 millis += ((long) (inputStream.readByte() & 0xFF) << 8 * i);
             }
             expiry = Instant.ofEpochMilli(millis);
-            valueType = inputStream.readByte();
+            valueTypeByte = inputStream.readByte();
         } else if ((first & 0xFF) == 0xFF) {
             throw new EndOfRdbFileException();
         } else {
-            valueType = first;
+            valueTypeByte = first;
         }
         byte[] key = readEncodedString(inputStream);
         byte[] value;
-        if (valueType == 0) {
+        if (valueTypeByte == 0) {
+            valueType = ValueType.STRING;
             value = readEncodedString(inputStream);
-        } else if ((valueType & 0xFF) == 0xFF) {
+        } else if ((valueTypeByte & 0xFF) == 0xFF) {
             throw new EndOfRdbFileException();
         } else {
             // TODO: implement other value types
-            LOGGER.log("Value type is not implemented: " + valueType);
+            LOGGER.log("Value type is not implemented: " + valueTypeByte);
             return null;
         }
 
-        return Pair.of(new String(key), new StorageRecord(new String(value), expiry));
+        return Pair.of(new String(key), new StorageRecord(valueType, new String(value), expiry));
     }
 
     private List<String> readAllKeys(DataInputStream inputStream) throws IOException {
