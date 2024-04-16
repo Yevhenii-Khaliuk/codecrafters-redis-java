@@ -14,7 +14,7 @@ public class Keys extends AbstractHandler {
     public byte[] handle(String[] arguments) {
         List<byte[]> keys;
         try {
-            keys = objectFactory.getRdbProcessor().readALlKeys();
+            keys = objectFactory.getRdbProcessor().readAllKeys();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
