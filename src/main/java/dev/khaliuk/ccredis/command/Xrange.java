@@ -32,7 +32,7 @@ public class Xrange extends AbstractHandler {
                 .orElseGet(ArrayList::new)
                 .stream()
                 .filter(r -> idIsBetween(r.id(), start, end))
-                .map(this::mapToSerializable)
+                .map(StreamRecord::toSerializable)
                 .toList();
 
 
@@ -41,13 +41,5 @@ public class Xrange extends AbstractHandler {
 
     private boolean idIsBetween(String id, String start, String end) {
         return id.compareTo(start) >= 0 && id.compareTo(end) <= 0;
-    }
-
-    private List<Object> mapToSerializable(StreamRecord streamRecord) {
-        List<Object> serializableRecord = new ArrayList<>();
-        serializableRecord.add(streamRecord.id());
-        streamRecord.pairs()
-            .forEach(pair -> serializableRecord.add(List.of(pair.getKey(), pair.getValue())));
-        return serializableRecord;
     }
 }
