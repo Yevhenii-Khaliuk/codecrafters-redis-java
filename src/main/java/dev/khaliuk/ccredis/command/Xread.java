@@ -35,7 +35,7 @@ public class Xread extends AbstractHandler {
         } else {
             long blockTimeout = Long.parseLong(arguments[blockIndex + 1]);
             long start = System.currentTimeMillis();
-            long end = start + blockTimeout;
+            long end = blockTimeout == 0 ? Long.MAX_VALUE : start + blockTimeout;
             boolean timedOut = true;
 
             result = getResult(keyIdPairs);
