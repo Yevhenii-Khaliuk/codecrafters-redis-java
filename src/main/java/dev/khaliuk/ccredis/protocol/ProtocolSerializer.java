@@ -45,7 +45,7 @@ public class ProtocolSerializer {
         return response;
     }
 
-    public byte[] integer(Integer value) {
+    public byte[] integer(Long value) {
         return (":" + value + CRLF_TERMINATOR).getBytes();
     }
 }

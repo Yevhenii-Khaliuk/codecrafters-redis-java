@@ -43,7 +43,7 @@ public class Wait extends AbstractHandler {
             throw new RuntimeException(e);
         }
 
-        int ackNumber = acknowledgedReplicasNumber.intValue();
+        long ackNumber = acknowledgedReplicasNumber.intValue();
         acknowledgedReplicasNumber.set(0);
         LOGGER.log("Counter after all futures completed: " + ackNumber);
         return objectFactory.getProtocolSerializer().integer(ackNumber == 0 ? replicas.size() : ackNumber);

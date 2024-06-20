@@ -86,7 +86,8 @@ public class ApplicationProperties {
                     i++;
                     break;
                 case "replicaof":
-                    replicaProperties = new ReplicaProperties(args[i + 1], Integer.parseInt(args[i + 2]));
+                    var hostPort = args[i + 1].split(" ");
+                    replicaProperties = new ReplicaProperties(hostPort[0], Integer.parseInt(hostPort[1]));
                     i += 2;
                     break;
                 case "dir":

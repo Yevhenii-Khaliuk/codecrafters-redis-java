@@ -39,4 +39,8 @@ public class Storage {
     public static void remove(String key) {
         cache.remove(key);
     }
+
+    public static boolean contains(String key) {
+        return cache.containsKey(key);
+    }
 }
