@@ -11,6 +11,6 @@ public class Echo extends AbstractHandler {
 
     @Override
     public byte[] handle(String[] arguments) {
-        return objectFactory.getProtocolSerializer().bulkString(arguments[1]);
+        return protocolSerializer().bulkString(arguments[1]);
     }
 }

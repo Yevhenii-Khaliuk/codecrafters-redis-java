@@ -15,7 +15,7 @@ public class Info extends AbstractHandler {
     public byte[] handle(String[] arguments) {
         String parameter = arguments[1].toLowerCase();
         return switch (parameter) {
-            case "replication" -> objectFactory.getProtocolSerializer().bulkString(getReplicationInfo());
+            case "replication" -> protocolSerializer().bulkString(getReplicationInfo());
             default -> throw new RuntimeException("Unknown parameter: " + parameter);
         };
     }

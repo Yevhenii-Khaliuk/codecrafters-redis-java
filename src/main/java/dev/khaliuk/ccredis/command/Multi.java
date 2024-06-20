@@ -2,13 +2,13 @@ package dev.khaliuk.ccredis.command;
 
 import dev.khaliuk.ccredis.config.ObjectFactory;
 
-public class Ping extends AbstractHandler {
-    public Ping(ObjectFactory objectFactory) {
+public class Multi extends AbstractHandler {
+    public Multi(ObjectFactory objectFactory) {
         super(objectFactory);
     }
 
     @Override
     public byte[] handle(String[] arguments) {
-        return protocolSerializer().simpleString("PONG");
+        return protocolSerializer().simpleString("OK");
     }
 }

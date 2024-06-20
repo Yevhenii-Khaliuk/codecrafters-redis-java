@@ -39,6 +39,7 @@ public class CommandFactory {
         INCR(Incr.class),
         INFO(Info.class),
         KEYS(Keys.class),
+        MULTI(Multi.class),
         PING(Ping.class),
         PSYNC(Psync.class),
         REPLCONF(ReplConf.class),

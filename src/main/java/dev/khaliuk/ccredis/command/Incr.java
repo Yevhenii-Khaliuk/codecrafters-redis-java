@@ -20,13 +20,13 @@ public class Incr extends AbstractHandler implements Write {
                 var storageValue = (String) Storage.get(key).value();
                 value = Long.parseLong(storageValue) + 1;
             } catch (NumberFormatException e) {
-                return objectFactory.getProtocolSerializer().simpleError(NOT_AN_INTEGER_ERROR_MESSAGE);
+                return protocolSerializer().simpleError(NOT_AN_INTEGER_ERROR_MESSAGE);
             }
         } else {
             value = 1;
         }
 
         Storage.put(key, String.valueOf(value));
-        return objectFactory.getProtocolSerializer().integer(value);
+        return protocolSerializer().integer(value);
     }
 }

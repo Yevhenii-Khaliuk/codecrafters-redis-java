@@ -43,6 +43,6 @@ public class Get extends AbstractHandler {
                 throw new RuntimeException(e);
             }
         }
-        return objectFactory.getProtocolSerializer().bulkString(value);
+        return protocolSerializer().bulkString(value);
     }
 }

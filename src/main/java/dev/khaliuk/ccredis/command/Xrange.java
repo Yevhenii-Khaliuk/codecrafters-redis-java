@@ -36,7 +36,7 @@ public class Xrange extends AbstractHandler {
                 .toList();
 
 
-        return objectFactory.getProtocolSerializer().array(foundStream);
+        return protocolSerializer().array(foundStream);
     }
 
     private boolean idIsBetween(String id, String start, String end) {

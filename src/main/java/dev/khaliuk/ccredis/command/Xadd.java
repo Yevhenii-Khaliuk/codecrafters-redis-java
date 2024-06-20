@@ -47,7 +47,7 @@ public class Xadd extends AbstractHandler {
         try {
             streamId = validateStreamId(streamId, latestId);
         } catch (InvalidIdException e) {
-            return objectFactory.getProtocolSerializer().simpleError(e.getMessage());
+            return protocolSerializer().simpleError(e.getMessage());
         }
 
         List<Pair<String, String>> streamValues = new ArrayList<>();
@@ -60,7 +60,7 @@ public class Xadd extends AbstractHandler {
         existingStream.add(newStreamRecord);
         Storage.put(streamKey, ValueType.STREAM, existingStream);
 
-        return objectFactory.getProtocolSerializer().bulkString(streamId);
+        return protocolSerializer().bulkString(streamId);
     }
 
     private String validateStreamId(String newId, String existingId) {

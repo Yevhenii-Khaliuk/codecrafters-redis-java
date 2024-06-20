@@ -19,6 +19,6 @@ public class Keys extends AbstractHandler {
             throw new RuntimeException(e);
         }
 
-        return objectFactory.getProtocolSerializer().array(keys);
+        return protocolSerializer().array(keys);
     }
 }

@@ -23,6 +23,6 @@ public class Set extends AbstractHandler implements Write {
         } else {
             Storage.put(arguments[1], arguments[2]);
         }
-        return objectFactory.getProtocolSerializer().simpleString("OK");
+        return protocolSerializer().simpleString("OK");
     }
 }

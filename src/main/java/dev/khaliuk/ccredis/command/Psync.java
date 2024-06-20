@@ -18,7 +18,7 @@ public class Psync extends AbstractHandler {
         String replicationId = objectFactory.getApplicationProperties().getReplicationId();
         Long replicationOffset = objectFactory.getApplicationProperties().getReplicationOffset();
         String fullResync = String.format("FULLRESYNC %s %s", replicationId, replicationOffset);
-        byte[] fullResyncResponse = objectFactory.getProtocolSerializer().simpleString(fullResync);
+        byte[] fullResyncResponse = protocolSerializer().simpleString(fullResync);
         byte[] rdbFile = Base64.getDecoder().decode(EMPTY_RDB_FILE);
         byte[] sizePrefix = ("$" + rdbFile.length + "\r\n").getBytes();
         byte[] response = ArrayUtils.addAll(fullResyncResponse, sizePrefix);

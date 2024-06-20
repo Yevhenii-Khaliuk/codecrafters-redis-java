@@ -56,11 +56,11 @@ public class Xread extends AbstractHandler {
             }
 
             if (timedOut) {
-                return objectFactory.getProtocolSerializer().bulkString(null);
+                return protocolSerializer().bulkString(null);
             }
         }
 
-        return objectFactory.getProtocolSerializer().array(result);
+        return protocolSerializer().array(result);
     }
 
     private int getBlockIndex(String[] arguments) {

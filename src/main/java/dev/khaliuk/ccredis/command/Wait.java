@@ -46,7 +46,7 @@ public class Wait extends AbstractHandler {
         long ackNumber = acknowledgedReplicasNumber.intValue();
         acknowledgedReplicasNumber.set(0);
         LOGGER.log("Counter after all futures completed: " + ackNumber);
-        return objectFactory.getProtocolSerializer().integer(ackNumber == 0 ? replicas.size() : ackNumber);
+        return protocolSerializer().integer(ackNumber == 0 ? replicas.size() : ackNumber);
     }
 
     private CompletableFuture<Boolean> mapToFuture(ReplicaClient replica, long timeoutMillis) {
@@ -60,7 +60,7 @@ public class Wait extends AbstractHandler {
 
     private boolean getAcknowledgement(ReplicaClient replica, long timeout) {
         LOGGER.log("Start sending ack request");
-        byte[] command = objectFactory.getProtocolSerializer().array(List.of("REPLCONF", "GETACK", "*"));
+        byte[] command = protocolSerializer().array(List.of("REPLCONF", "GETACK", "*"));
         try {
             byte[] response = replica.sendAndAwaitResponse(command, timeout);
             LOGGER.log("Got response: " + Arrays.toString(response));

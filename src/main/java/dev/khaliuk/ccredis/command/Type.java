@@ -19,6 +19,6 @@ public class Type extends AbstractHandler {
         } else {
             type = storageRecord.valueType().getDisplay();
         }
-        return objectFactory.getProtocolSerializer().simpleString(type);
+        return protocolSerializer().simpleString(type);
     }
 }
