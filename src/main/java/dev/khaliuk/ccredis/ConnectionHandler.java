@@ -2,6 +2,7 @@ package dev.khaliuk.ccredis;
 
 import dev.khaliuk.ccredis.command.CommandFactory;
 import dev.khaliuk.ccredis.command.Handler;
+import dev.khaliuk.ccredis.command.Multi;
 import dev.khaliuk.ccredis.command.Psync;
 import dev.khaliuk.ccredis.command.Write;
 import dev.khaliuk.ccredis.config.ApplicationProperties;
@@ -65,6 +66,23 @@ public class ConnectionHandler extends Thread {
                     LOGGER.log("Start replicate command: " + commandString);
                     commandReplicator.replicateWriteCommand(commandString);
                     LOGGER.log("Command is sent for replication");
+                }
+
+                if (handler instanceof Multi multi) {
+                    while (true) {
+                        outputStream.write(response);
+                        outputStream.flush();
+
+                        var parsedInput = protocolDeserializer.parseInput(inputStream);
+                        var commandWithArguments = parsedInput.getLeft().split(" ");
+
+                        if (commandWithArguments[0].equalsIgnoreCase("EXEC")) {
+                            response = multi.executeCommands();
+                            break;
+                        } else {
+                            response = multi.enqueueCommand(commandWithArguments);
+                        }
+                    }
                 }
 
                 LOGGER.log("End handling with response: " + new String(response));
