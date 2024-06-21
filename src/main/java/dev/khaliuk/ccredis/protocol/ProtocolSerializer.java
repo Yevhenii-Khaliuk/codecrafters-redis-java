@@ -45,6 +45,16 @@ public class ProtocolSerializer {
         return response;
     }
 
+    public byte[] arrayOfSerialized(List<byte[]> elements) {
+        var response = ("*" + elements.size() + CRLF_TERMINATOR).getBytes();
+
+        for (byte[] element : elements) {
+            response = ArrayUtils.addAll(response, element);
+        }
+
+        return response;
+    }
+
     public byte[] integer(Long value) {
         return (":" + value + CRLF_TERMINATOR).getBytes();
     }

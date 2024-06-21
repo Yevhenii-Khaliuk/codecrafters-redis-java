@@ -26,8 +26,12 @@ public class Multi extends AbstractHandler {
         if (commandsCache.isEmpty()) {
             return protocolSerializer().array(List.of());
         } else {
-            // same response for now
-            return protocolSerializer().array(List.of());
+            var responses = commandsCache.stream()
+                .map(command -> objectFactory.getCommandFactory()
+                    .getCommandHandler(command[0])
+                    .handle(command))
+                .toList();
+            return protocolSerializer().arrayOfSerialized(responses);
         }
     }
 }
