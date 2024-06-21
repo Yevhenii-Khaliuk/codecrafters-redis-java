@@ -55,7 +55,7 @@ public class ConnectionHandler extends Thread {
                 if (handler instanceof Psync) {
                     isReplicaSocket = true;
                     applicationProperties.addReplica(new ReplicaClient(socket));
-                    LOGGER.log(String.format("Replica with port %s has been added%n", socket.getPort()));
+                    LOGGER.log("Replica with port %s has been added%n".formatted(socket.getPort()));
                     outputStream.write(response);
                     outputStream.flush();
                     return; // we want the loop to break here and consequently the thread to stop

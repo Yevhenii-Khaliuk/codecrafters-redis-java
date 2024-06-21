@@ -11,7 +11,7 @@ public class CommandFactory {
     private final Map<Command, Handler> commandHandlers = new EnumMap<>(Command.class);
 
     public CommandFactory(ObjectFactory objectFactory) throws NoSuchMethodException, InvocationTargetException,
-            InstantiationException, IllegalAccessException {
+        InstantiationException, IllegalAccessException {
         initHandlers(objectFactory);
     }
 
@@ -24,7 +24,7 @@ public class CommandFactory {
     }
 
     private void initHandlers(ObjectFactory objectFactory) throws NoSuchMethodException, InstantiationException,
-            IllegalAccessException, InvocationTargetException {
+        IllegalAccessException, InvocationTargetException {
         for (Command command : Command.values()) {
             Constructor<? extends Handler> handlerConstructor = command.handler.getConstructor(ObjectFactory.class);
             Handler handler = handlerConstructor.newInstance(objectFactory);
@@ -35,6 +35,7 @@ public class CommandFactory {
     private enum Command {
         CONFIG(Config.class),
         ECHO(Echo.class),
+        EXEC(Exec.class),
         GET(Get.class),
         INCR(Incr.class),
         INFO(Info.class),
