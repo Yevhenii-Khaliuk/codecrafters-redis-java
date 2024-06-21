@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Multi extends AbstractHandler {
-    private final List<String[]> commandsCache = new ArrayList<>();
+    private final ThreadLocal<List<String[]>> commandsCache = new ThreadLocal<>();
 
     public Multi(ObjectFactory objectFactory) {
         super(objectFactory);
@@ -18,26 +18,31 @@ public class Multi extends AbstractHandler {
     }
 
     public byte[] enqueueCommand(String[] command) {
-        commandsCache.add(command);
+        if (commandsCache.get() == null) {
+            commandsCache.set(new ArrayList<>());
+        }
+
+        commandsCache.get().add(command);
         return protocolSerializer().simpleString("QUEUED");
     }
 
     public byte[] executeCommands() {
-        if (commandsCache.isEmpty()) {
+        if (commandsCache.get() == null) {
             return protocolSerializer().array(List.of());
         } else {
-            var responses = commandsCache.stream()
+            var responses = commandsCache.get()
+                .stream()
                 .map(command -> objectFactory.getCommandFactory()
                     .getCommandHandler(command[0])
                     .handle(command))
                 .toList();
-            commandsCache.clear();
+            commandsCache.remove();
             return protocolSerializer().arrayOfSerialized(responses);
         }
     }
 
     public byte[] discardTransaction() {
-        commandsCache.clear();
+        commandsCache.remove();
         return protocolSerializer().simpleString("OK");
     }
 }
