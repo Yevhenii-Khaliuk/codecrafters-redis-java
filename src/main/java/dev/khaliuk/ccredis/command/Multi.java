@@ -31,7 +31,13 @@ public class Multi extends AbstractHandler {
                     .getCommandHandler(command[0])
                     .handle(command))
                 .toList();
+            commandsCache.clear();
             return protocolSerializer().arrayOfSerialized(responses);
         }
+    }
+
+    public byte[] discardTransaction() {
+        commandsCache.clear();
+        return protocolSerializer().simpleString("OK");
     }
 }

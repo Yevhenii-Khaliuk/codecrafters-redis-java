@@ -34,6 +34,7 @@ public class CommandFactory {
 
     private enum Command {
         CONFIG(Config.class),
+        DISCARD(Discard.class),
         ECHO(Echo.class),
         EXEC(Exec.class),
         GET(Get.class),

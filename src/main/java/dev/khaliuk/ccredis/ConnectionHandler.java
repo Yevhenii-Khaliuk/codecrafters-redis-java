@@ -69,20 +69,7 @@ public class ConnectionHandler extends Thread {
                 }
 
                 if (handler instanceof Multi multi) {
-                    while (true) {
-                        outputStream.write(response);
-                        outputStream.flush();
-
-                        var parsedInput = protocolDeserializer.parseInput(inputStream);
-                        var commandWithArguments = parsedInput.getLeft().split(" ");
-
-                        if (commandWithArguments[0].equalsIgnoreCase("EXEC")) {
-                            response = multi.executeCommands();
-                            break;
-                        } else {
-                            response = multi.enqueueCommand(commandWithArguments);
-                        }
-                    }
+                    response = handleMulti(multi, response, inputStream, outputStream);
                 }
 
                 LOGGER.log("End handling with response: " + new String(response));
@@ -104,5 +91,27 @@ public class ConnectionHandler extends Thread {
                 }
             }
         }
+    }
+
+    private byte[] handleMulti(Multi multi, byte[] response, DataInputStream inputStream, OutputStream outputStream) throws IOException {
+        while (true) {
+            outputStream.write(response);
+            outputStream.flush();
+
+            var parsedInput = protocolDeserializer.parseInput(inputStream);
+            var commandWithArguments = parsedInput.getLeft().split(" ");
+
+            if (commandWithArguments[0].equalsIgnoreCase("EXEC")) {
+                response = multi.executeCommands();
+                break;
+            } else if (commandWithArguments[0].equalsIgnoreCase("DISCARD")) {
+                response = multi.discardTransaction();
+                break;
+            } else {
+                response = multi.enqueueCommand(commandWithArguments);
+            }
+        }
+
+        return response;
     }
 }
